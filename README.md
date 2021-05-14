@@ -47,6 +47,11 @@ The project is under development. Description, PCB files, schematics, OSD, etc. 
 
 -----------
 
+## Logotype
+Liberty-X logo was designed by Frey Hertz (Pavel Neshumov)
+
+-----------
+
 ## Dependencies
 - **Arduino STM32** (Arduino code support for STM32): https://github.com/rogerclarkmelbourne/Arduino_STM32
 - **WS2812B** (Library for WS2812B LEDs): https://github.com/rogerclarkmelbourne/WS2812B_STM32_Libmaple
