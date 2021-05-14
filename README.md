@@ -10,6 +10,8 @@ This project is currently part of the AMLS (Autonomous Multicopter Landing Syste
 
 This project is a fork of the YMFC-32 project (http://www.brokking.net/)
 
+The project is under development. Description, PCB files, schematics, OSD, etc. coming soon
+
 ----------
 
 ![Photo](LIBERTY-X.png "Photo")
@@ -43,7 +45,3 @@ This project is a fork of the YMFC-32 project (http://www.brokking.net/)
 ## Dependencies
 - **Arduino STM32** (Arduino code support for STM32): https://github.com/rogerclarkmelbourne/Arduino_STM32
 - **WS2812B** (Library for WS2812B LEDs): https://github.com/rogerclarkmelbourne/WS2812B_STM32_Libmaple
-
------------
-
-The project is under development. Description, PCB files, schematics, OSD, etc. coming soon
