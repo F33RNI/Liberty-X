@@ -5,7 +5,7 @@
 [![Twitter](https://img.shields.io/twitter/url?style=social&url=https%3A%2F%2Ftwitter.com%2Ffrey_hertz)](https://twitter.com/intent/tweet?text=Wow:&url=https%3A%2F%2Ftwitter.com%2Ffrey_hertz)
 [![GitHub stars](https://img.shields.io/github/stars/XxOinvizioNxX/Liberty-X)](https://github.com/XxOinvizioNxX/Liberty-X/stargazers)
 ![GitHub All Releases](https://img.shields.io/github/downloads/XxOinvizioNxX/Liberty-X/total?style=flat-square "GitHub All Releases")
-[![GitHub license](https://img.shields.io/github/license/XxOinvizioNxX/Liberty-X)](https://github.com/XxOinvizioNxX/Liberty-X/blob/main/LICENSE)
+
 
 ----------
 
