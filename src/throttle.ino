@@ -39,17 +39,18 @@ void throttle_and_motors(void) {
 				throttle_exp = 1500.0 - exp((float)abs(throttle_exp - 1500) / MANUAL_TROTTLE_EXP) * MANUAL_TROTTLE_RATE;
 			}
 
-			throttle = throttle_exp + takeoff_throttle;
+			if (flight_mode >= 2)
+				// Altitude hold
+				throttle = 1500 + takeoff_throttle + pid_output_alt;
+			else
+				// 1 flight mode
+				throttle = throttle_exp + takeoff_throttle;
 
 #ifdef LIBERTY_LINK
 			if (link_allowed && link_lost_counter < LINK_LOST_CYCLES && link_command == 1)
 				// Add direct throttle control if Liberty Link is working and link_command is 1 (DDC)
 				throttle += (direct_throttle_control - 1500);
 #endif
-			if (flight_mode >= 2) {
-				// Altitude hold
-				throttle = 1500 + takeoff_throttle + pid_output_alt;
-			}
 		}
 
 		// Limit the throttle

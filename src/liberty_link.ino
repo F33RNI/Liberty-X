@@ -109,8 +109,8 @@ void liberty_link(void) {
                     l_lon_waypoint = (int32_t)link_buffer[7] | (int32_t)link_buffer[6] << 8 | (int32_t)link_buffer[5] << 16 | (int32_t)link_buffer[4] << 24;
 
                     // Check data range
-                    if (l_lat_waypoint < -90000000 || l_lat_waypoint > 90000000 ||
-                        l_lon_waypoint < -180000000 || l_lon_waypoint > 18000000) {
+                    if (l_lat_waypoint <= -90000000 || l_lat_waypoint >= 90000000 ||
+                        l_lon_waypoint <= -180000000 || l_lon_waypoint >= 18000000) {
                         // Disable any corrections and show error
                         l_lat_waypoint = l_lat_gps;
                         l_lon_waypoint = l_lon_gps;
@@ -135,13 +135,13 @@ void liberty_link(void) {
                     }
                 }
                 else if (link_command > 0 && link_command != 6) {
+                    // 6 - Abort Liberty Way
                     // Unknown command
                     link_command = 0;
                     error = 9;
                 }
 
                 if (link_command > 0 && link_command != 6)
-                    // 6 - Abort Liberty Way
                     // Reset link_aborted on new data
                     link_aborted = 0;
             }
@@ -214,118 +214,125 @@ void liberty_link(void) {
         liberty_link_abort();
     }
 
-    // Step 1. Take off
-    if (link_waypoint_step == 1) {
-        if (/*!error &&*/ start < 2 && channel_3 > 1050 && channel_6 > 1500) {
-            ground_pressure = actual_pressure;
-            start = 1;
-            link_waypoint_step = 2;
-        }
-    }
-    // Step 2. Waiting for takeoff
-    else if (link_waypoint_step == 2) {
-        if (takeoff_detected)
-            // Go to step altitude waypoint calculations if takeoff detected
-            link_waypoint_step = 3;
-    }
-    // Step 3. Calculate the distance and reduse the pressure setpoint and increase the altitude
-    else if (link_waypoint_step == 3) {
-        if (abs(l_lat_setpoint - l_lat_waypoint) < GPS_SETPOINT_MAX_DISTANCE && abs(l_lon_setpoint - l_lon_waypoint) < GPS_SETPOINT_MAX_DISTANCE) {
-            // If the drone is nearby, slightly increase the altitude
-            if (pid_alt_setpoint - (ground_pressure - NEAR_PRESSURE_ASCEND) > 1.0)
-                // Decrease pressure (increase altitude) until waypoint is reached
-                pid_alt_setpoint -= WAYPOINT_ALTITUDE_TERM;
-            else
-                // Go to gps pre-calculations as soon as the waypoint is reached
-                link_waypoint_step = 4;
-        }
-        else {
-            // If the drone is far away, increase the altitude significantly (so as not to crash into buildings)
-            if (pid_alt_setpoint - (ground_pressure - FAR_PRESSURE_ASCEND) > 1.0)
-                // Decrease pressure (increase altitude) until waypoint is reached
-                pid_alt_setpoint -= WAYPOINT_ALTITUDE_TERM;
-            else
-                // Go to gps pre-calculations as soon as the waypoint is reached
-                link_waypoint_step = 4;
-        }
-    }
-    // Step 4. Calculate the distance and factors to the GPS waypoint
-    else if (link_waypoint_step == 4) {
-        if (abs(l_lat_setpoint - l_lat_waypoint) < GPS_SETPOINT_MAX_DISTANCE && abs(l_lon_setpoint - l_lon_waypoint) < GPS_SETPOINT_MAX_DISTANCE)
-            // If the drone is nearby, go to the GPS stabilization and altitude decreasing
-            link_waypoint_step = 6;
-        else {
-            // Reset adjustments if needed
-            if ((l_lat_waypoint > l_lat_setpoint && l_lat_waypoint_last < l_lat_setpoint) ||
-                (l_lat_waypoint < l_lat_setpoint && l_lat_waypoint_last > l_lat_setpoint))
-                // Reset latitude float adjustments because direction has changed
-                l_lat_gps_float_adjust = 0;
-            if ((l_lon_waypoint > l_lon_setpoint && l_lon_waypoint_last < l_lon_setpoint) ||
-                (l_lon_waypoint < l_lat_setpoint && l_lon_waypoint_last > l_lon_setpoint))
-                // Reset latitude float adjustments because direction has changed
-                l_lon_gps_float_adjust = 0;
+    if (!link_aborted) {
+        // Liberty-Way WAYP sequence only if not aborted
 
-            if (l_lat_waypoint != l_lat_waypoint_last || l_lon_waypoint != l_lon_waypoint_last) {
-                // Reset factors because the need to be recalculated
-                waypoint_lat_factor = 0;
-                waypoint_lon_factor = 0;
-
-                // Calculate factors
-                if (abs(l_lat_waypoint - l_lat_setpoint) >= abs(l_lon_waypoint - l_lon_setpoint)) {
-                    waypoint_lon_factor = (float)abs(l_lon_waypoint - l_lon_setpoint) / (float)abs(l_lat_waypoint - l_lat_setpoint);
-                    waypoint_lat_factor = 1;
-                }
-                else {
-                    waypoint_lon_factor = 1;
-                    waypoint_lat_factor = (float)abs(l_lat_waypoint - l_lat_setpoint) / (float)abs(l_lon_waypoint - l_lon_setpoint);
-                }
+        // Step 1. Take off
+        if (link_waypoint_step == 1) {
+            if (/*!error &&*/ start < 2 && channel_3 > 1050 && channel_6 > 1500) {
+                ground_pressure = actual_pressure;
+                start = 1;
+                link_waypoint_step = 2;
             }
-
-            // Go to GPS waypoint flight
-            link_waypoint_step = 5;
-
-            // Store new waypoints
-            l_lat_waypoint_last = l_lat_waypoint;
-            l_lon_waypoint_last = l_lon_waypoint;
+            else if (takeoff_detected)
+                // Go to step altitude waypoint calculations if takeoff detected
+                link_waypoint_step = 3;
         }
-    }
-    // Step 5. GPS waypoint flight
-    else if (link_waypoint_step == 5) {
-        if (abs(l_lat_setpoint - l_lat_waypoint) < GPS_SETPOINT_MAX_DISTANCE && abs(l_lon_setpoint - l_lon_waypoint) < GPS_SETPOINT_MAX_DISTANCE)
-            // If the drone is nearby, go to the GPS stabilization
-            link_waypoint_step = 6;
-
-        // Calculate speed factor
-        if (abs(l_lat_waypoint - l_lat_setpoint) < 160 && abs(l_lon_waypoint - l_lon_setpoint) < 160 && waypoint_move_factor > WAYPOINT_GPS_MIN_FACTOR)
-            waypoint_move_factor -= 0.00015;
-        else if (waypoint_move_factor < WAYPOINT_GPS_MAX_FACTOR)
-            waypoint_move_factor += 0.0001;
-
-        // Calculate adjustments
-        if (l_lat_waypoint != l_lat_setpoint) {
-            if (l_lat_waypoint > l_lat_setpoint) l_lat_gps_float_adjust += waypoint_move_factor * waypoint_lat_factor;
-            if (l_lat_waypoint < l_lat_setpoint) l_lat_gps_float_adjust -= waypoint_move_factor * waypoint_lat_factor;
+        // Step 2. Waiting for takeoff
+        else if (link_waypoint_step == 2) {
+            if (takeoff_detected)
+                // Go to step altitude waypoint calculations if takeoff detected
+                link_waypoint_step = 3;
         }
-        if (l_lon_waypoint != l_lon_setpoint) {
-            if (l_lon_waypoint > l_lon_setpoint) l_lon_gps_float_adjust += waypoint_move_factor * waypoint_lon_factor;
-            if (l_lon_waypoint < l_lon_setpoint) l_lon_gps_float_adjust -= waypoint_move_factor * waypoint_lon_factor;
+        // Step 3. Calculate the distance and reduse the pressure setpoint and increase the altitude
+        else if (link_waypoint_step == 3) {
+            if (abs(l_lat_setpoint - l_lat_waypoint) < GPS_SETPOINT_MAX_DISTANCE && abs(l_lon_setpoint - l_lon_waypoint) < GPS_SETPOINT_MAX_DISTANCE) {
+                // If the drone is nearby, slightly increase the altitude
+                if (pid_alt_setpoint - (ground_pressure - NEAR_PRESSURE_ASCEND) > 1.0)
+                    // Decrease pressure (increase altitude) until waypoint is reached
+                    pid_alt_setpoint -= WAYPOINT_ALTITUDE_TERM;
+                else
+                    // Go to gps pre-calculations as soon as the waypoint is reached
+                    link_waypoint_step = 4;
+            }
+            else {
+                // If the drone is far away, increase the altitude significantly (so as not to crash into buildings)
+                if (pid_alt_setpoint - (ground_pressure - FAR_PRESSURE_ASCEND) > 1.0)
+                    // Decrease pressure (increase altitude) until waypoint is reached
+                    pid_alt_setpoint -= WAYPOINT_ALTITUDE_TERM;
+                else
+                    // Go to gps pre-calculations as soon as the waypoint is reached
+                    link_waypoint_step = 4;
+            }
         }
-    }
-    // Step 6. GPS setpoint stabilization (direct control of setpoints) and increasing the pressure (decreasing the altitude)
-    else if (link_waypoint_step == 6) {
-        // Set GPS setpoint
-        l_lat_setpoint = l_lat_waypoint;
-        l_lon_setpoint = l_lon_waypoint;
+        // Step 4. Calculate the distance and factors to the GPS waypoint
+        else if (link_waypoint_step == 4) {
+            if (abs(l_lat_setpoint - l_lat_waypoint) < GPS_SETPOINT_MAX_DISTANCE && abs(l_lon_setpoint - l_lon_waypoint) < GPS_SETPOINT_MAX_DISTANCE)
+                // If the drone is nearby, go to the GPS stabilization and altitude decreasing
+                link_waypoint_step = 6;
+            else {
+                // Reset adjustments if needed
+                if ((l_lat_waypoint > l_lat_setpoint && l_lat_waypoint_last < l_lat_setpoint) ||
+                    (l_lat_waypoint < l_lat_setpoint && l_lat_waypoint_last > l_lat_setpoint))
+                    // Reset latitude float adjustments because direction has changed
+                    l_lat_gps_float_adjust = 0;
+                if ((l_lon_waypoint > l_lon_setpoint && l_lon_waypoint_last < l_lon_setpoint) ||
+                    (l_lon_waypoint < l_lat_setpoint && l_lon_waypoint_last > l_lon_setpoint))
+                    // Reset latitude float adjustments because direction has changed
+                    l_lon_gps_float_adjust = 0;
 
-        if (link_lost_counter < LINK_LOST_CYCLES) {
-            // Check if Liberty Link available before descending
-            // Pressure waypoint
-            if (pid_alt_setpoint < altitude_waypoint)
-                // Increase pressure (decrease altitude)
-                pid_alt_setpoint += WAYPOINT_ALTITUDE_TERM;
-            else if (pid_alt_setpoint > altitude_waypoint)
-                // Decrease pressure (increase altitude)
-                pid_alt_setpoint -= WAYPOINT_ALTITUDE_TERM;
+                if (l_lat_waypoint != l_lat_waypoint_last || l_lon_waypoint != l_lon_waypoint_last) {
+                    // Reset factors because the need to be recalculated
+                    waypoint_lat_factor = 0;
+                    waypoint_lon_factor = 0;
+
+                    // Calculate factors
+                    if (abs(l_lat_waypoint - l_lat_setpoint) >= abs(l_lon_waypoint - l_lon_setpoint)) {
+                        waypoint_lon_factor = (float)abs(l_lon_waypoint - l_lon_setpoint) / (float)abs(l_lat_waypoint - l_lat_setpoint);
+                        waypoint_lat_factor = 1;
+                    }
+                    else {
+                        waypoint_lon_factor = 1;
+                        waypoint_lat_factor = (float)abs(l_lat_waypoint - l_lat_setpoint) / (float)abs(l_lon_waypoint - l_lon_setpoint);
+                    }
+                }
+
+                // Go to GPS waypoint flight
+                link_waypoint_step = 5;
+
+                // Store new waypoints
+                l_lat_waypoint_last = l_lat_waypoint;
+                l_lon_waypoint_last = l_lon_waypoint;
+            }
+        }
+        // Step 5. GPS waypoint flight
+        else if (link_waypoint_step == 5) {
+            if (abs(l_lat_setpoint - l_lat_waypoint) < GPS_SETPOINT_MAX_DISTANCE && abs(l_lon_setpoint - l_lon_waypoint) < GPS_SETPOINT_MAX_DISTANCE)
+                // If the drone is nearby, go to the GPS stabilization
+                link_waypoint_step = 6;
+
+            // Calculate speed factor
+            if (abs(l_lat_waypoint - l_lat_setpoint) < 160 && abs(l_lon_waypoint - l_lon_setpoint) < 160 && waypoint_move_factor > WAYPOINT_GPS_MIN_FACTOR)
+                waypoint_move_factor -= 0.00015;
+            else if (waypoint_move_factor < WAYPOINT_GPS_MAX_FACTOR)
+                waypoint_move_factor += 0.0001;
+
+            // Calculate adjustments
+            if (l_lat_waypoint != l_lat_setpoint) {
+                if (l_lat_waypoint > l_lat_setpoint) l_lat_gps_float_adjust += waypoint_move_factor * waypoint_lat_factor;
+                if (l_lat_waypoint < l_lat_setpoint) l_lat_gps_float_adjust -= waypoint_move_factor * waypoint_lat_factor;
+            }
+            if (l_lon_waypoint != l_lon_setpoint) {
+                if (l_lon_waypoint > l_lon_setpoint) l_lon_gps_float_adjust += waypoint_move_factor * waypoint_lon_factor;
+                if (l_lon_waypoint < l_lon_setpoint) l_lon_gps_float_adjust -= waypoint_move_factor * waypoint_lon_factor;
+            }
+        }
+        // Step 6. GPS setpoint stabilization (direct control of setpoints) and increasing the pressure (decreasing the altitude)
+        else if (link_waypoint_step == 6) {
+            // Set GPS setpoint
+            l_lat_setpoint = l_lat_waypoint;
+            l_lon_setpoint = l_lon_waypoint;
+
+            /*if (link_lost_counter < LINK_LOST_CYCLES) {
+                // Check if Liberty Link available before descending
+                // Pressure waypoint
+                if (pid_alt_setpoint < altitude_waypoint)
+                    // Increase pressure (decrease altitude)
+                    pid_alt_setpoint += WAYPOINT_ALTITUDE_TERM;
+                else if (pid_alt_setpoint > altitude_waypoint)
+                    // Decrease pressure (increase altitude)
+                    pid_alt_setpoint -= WAYPOINT_ALTITUDE_TERM;
+            }*/
         }
     }
 }
@@ -335,7 +342,6 @@ void liberty_link(void) {
 /// </summary>
 void liberty_link_abort(void) {
     // Reset GPS and altitude flight variables
-    link_waypoint_step = 0;
     link_new_waypoint_altitude = 0;
     link_new_waypoint_gps = 0;
 
@@ -351,6 +357,14 @@ void liberty_link_abort(void) {
     // Set current GPS position as setpoint
     l_lat_setpoint = l_lat_gps;
     l_lon_setpoint = l_lon_gps;
+    l_lat_waypoint = l_lat_gps;
+    l_lon_waypoint = l_lon_gps;
+
+    // Reset GPS corrections
+    l_lat_gps_float_adjust = 0;
+    l_lon_gps_float_adjust = 0;
+    waypoint_move_factor = 0;
+    pid_gps_reset();
 
     // Set aborted flag
     link_aborted = 1;
