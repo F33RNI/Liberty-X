@@ -13,7 +13,7 @@ This project is currently a firmware for a flight controller based on an STM32 m
 
 This project is currently part of the AMLS (Autonomous Multicopter Landing System) project. The AMLS project was created as a part of project activities subject of Moscow Polytech University by the 181-311 group
 
-This project is a fork of the YMFC-32 project (http://www.brokking.net/)
+This project is a fork of the YMFC-32 project
 
 The project is under development. Description, PCB files, schematics, OSD, etc. coming soon
 
