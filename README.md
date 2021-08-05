@@ -23,6 +23,8 @@ The project is under development. Description, PCB files, schematics, OSD, etc. 
 
 ![PCB](PCB_PHOTO.png "PCB")
 
+![Schematic](SCHEMATIC.png "Schematic")
+
 ----------
 
 ## AMLS Projects:
