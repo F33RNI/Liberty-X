@@ -138,14 +138,27 @@ uint8_t link_lost_counter = UINT8_MAX;
 
 uint8_t link_waypoint_step, link_new_waypoint_gps, link_new_waypoint_altitude;
 int32_t l_lat_waypoint, l_lon_waypoint, l_lat_waypoint_last, l_lon_waypoint_last;
-float altitude_waypoint;
+float pressure_waypoint;
 float waypoint_lat_factor, waypoint_lon_factor, waypoint_move_factor;
 #endif
 
 // Telemetry
 #ifdef TELEMETRY
-uint8_t telemetry_send_byte, telemetry_bit_counter, telemetry_loop_counter, telemetry_check_byte;
+uint8_t telemetry_send_byte, telemetry_bit_counter, telemetry_loop_counter, telemetry_check_byte, telemetry_burst_counter;
 uint32_t telemetry_buffer_bytes;
+#endif
+
+// Sonars
+#ifdef SONARUS
+uint8_t sonarus_cycle_counter;
+uint8_t sonar_1_raw, sonar_2_raw;
+#endif
+
+// Lux meter
+#ifdef LUX_METER
+uint8_t lux_cycle_counter;
+uint16_t lux_raw_data;
+uint8_t lux_sqrt_data;
 #endif
 
 // Debugger

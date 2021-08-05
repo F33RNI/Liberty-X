@@ -20,8 +20,8 @@
  */
 
 // Constants, variables and config
-#include "constants.h"
 #include "config.h"
+#include "constants.h"
 #include "pid.h"
 #include "datatypes.h"
 
@@ -55,13 +55,19 @@ void setup()
     leds_setup();
     imu_setup();
     compass_setup();
+#ifdef SONARUS
+    sonarus_setup();
+#endif
+#ifdef LUX_METER
+    lux_meter_setup();
+#endif
     imu_calibrate_gyro();
     barometer_setup();
 
     // Wait for the reciever
     while (channel_1 < 990 || channel_2 < 990 || channel_3 < 990 || channel_4 < 990) {
         // Stay in the loop because there is no valid signal from the receiver
-        error = 4;
+        error = 6;
         // Show cuurent error
         leds_error_signal();
         // Simulate main loop
@@ -139,15 +145,40 @@ void loop()
     // Camera gimbal
     gimbal();
 
+    // Sonars
+#ifdef SONARUS
+    sonarus();
+#endif
+
+    // Lux meter
+#ifdef LUX_METER
+    lux_meter();
+#endif
+
     // Telemetry
 #ifdef TELEMETRY
 #ifdef LIBERTY_LINK
     // Send telemetry if Liberty-Link not allowed, or if link_command = 8
-    if (!link_allowed || link_telemetry_allowed) {
-        telemetry();
+    if (link_telemetry_allowed) {
+        for (telemetry_burst_counter = 0; telemetry_burst_counter < BURST_BYTES; telemetry_burst_counter++)
+        {
+            // Send telemetry
+            telemetry();
+
+            // Immediately reset the counter if in liberty-link mode
+            if (telemetry_loop_counter >= 31) {
+                telemetry_loop_counter = 0;
+                break;
+            }
+        }
+        // Reset flag
         link_telemetry_allowed = 0;
     }
+    else if (!link_allowed)
+        // Default telemetry mode
+        telemetry();
 #else
+    // Default telemetry mode
     telemetry();
 #endif
 #endif

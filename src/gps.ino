@@ -274,6 +274,9 @@ void gps_handler(void) {
 
 	if (gps_lost_counter > GPS_LOST_CYCLES) {
 		// If the watchdog timer is exceeded the GPS signal is missing
+		// Reset number of satellites
+		number_used_sats = 0;
+
 		if (flight_mode >= 3 && start > 0) {
 			// Set the flight mode to 2 (Altitude hold) if flight mode is set to 3 (GPS hold)
 			flight_mode = 2;

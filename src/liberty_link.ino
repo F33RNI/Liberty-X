@@ -89,13 +89,18 @@ void liberty_link(void) {
                 }
                 else if (link_command == 2) {
                     // Pressure waypoint only after ascending
-                    altitude_waypoint = (float)((int32_t)link_buffer[3] | (int32_t)link_buffer[2] << 8 | (int32_t)link_buffer[1] << 16 | (int32_t)link_buffer[0] << 24);
+                    pressure_waypoint = (float)((int32_t)link_buffer[3] | (int32_t)link_buffer[2] << 8 | (int32_t)link_buffer[1] << 16 | (int32_t)link_buffer[0] << 24);
+
+                    if (pressure_waypoint < 1000)
+                        // Do not change pressure waypoint if less then 1000 Pa
+                        pressure_waypoint = pid_alt_setpoint;
 
                     // Check data range and other packet bytes
-                    if (altitude_waypoint < 1000 || altitude_waypoint > 120000 ||
+                    if (pressure_waypoint > 120000 ||
                         link_buffer[4] || link_buffer[5] ||
                         link_buffer[6] || link_buffer[7]) {
                         // Disable any corrections and show error
+                        pressure_waypoint = actual_pressure;
                         link_command = 0;
                         error = 9;
                     }
@@ -117,9 +122,16 @@ void liberty_link(void) {
                         link_command = 0;
                         error = 9;
                     }
-                    else
+                    else {
                         // Set flag if all checks passed
-                        link_new_waypoint_gps = 1;
+                        if (link_waypoint_step == 6)
+                            // If liberty-link is in the setpoint mode
+                            link_new_waypoint_gps = 1;
+                        else if (abs(l_lat_setpoint - l_lat_waypoint) > GPS_SETPOINT_MAX_DISTANCE * 2
+                            || abs(l_lon_setpoint - l_lon_waypoint) > GPS_SETPOINT_MAX_DISTANCE * 2)
+                            // If liberty-link is not in the setpoint mode and it's a realy new position
+                            link_new_waypoint_gps = 1;
+                    }
                 }
                 else if (link_command == 4 || link_command == 5) {
                     // 4 - Turn off the motors
@@ -140,10 +152,6 @@ void liberty_link(void) {
                     link_command = 0;
                     error = 9;
                 }
-
-                if (link_command > 0 && link_command != 6)
-                    // Reset link_aborted on new data
-                    link_aborted = 0;
             }
             else
                 link_lost_counter = UINT8_MAX;
@@ -168,6 +176,19 @@ void liberty_link(void) {
                 flight_mode = 1;
             }
             else if (link_command == 4) {
+#ifdef SONARUS
+                if (sonar_2_raw && sonar_2_raw < SONARUS_LINK_MTOF) {
+                    // Turn off the motors if altitude is less than SONARUS_LINK_MTOF and not equal to 0
+                    start = 0;
+                    takeoff_detected = 0;
+                    // Reset GPS and altitude flight variables
+                    link_waypoint_step = 0;
+                    link_new_waypoint_altitude = 0;
+                    link_new_waypoint_gps = 0;
+                    // Reset link command
+                    link_command = 0;
+                }
+#else
                 // Turn off the motors
                 start = 0;
                 takeoff_detected = 0;
@@ -177,10 +198,11 @@ void liberty_link(void) {
                 link_new_waypoint_gps = 0;
                 // Reset link command
                 link_command = 0;
+#endif
             }
 
             // Start Liberty Way sequence if link allowed, working and all waypoints provided
-            if (link_new_waypoint_altitude && link_new_waypoint_gps) {
+            if (link_new_waypoint_altitude && link_new_waypoint_gps && number_used_sats >= LINK_MIN_NUM_SATS) {
                 if (link_waypoint_step == 0 && link_command == 5) {
                     // Begin Liberty Way sequence
                     link_waypoint_step = 1;
@@ -197,10 +219,14 @@ void liberty_link(void) {
                     link_new_waypoint_altitude = 0;
                     link_new_waypoint_gps = 0;
                 }
+                if (link_command > 0 && link_command != 6)
+                    // Reset link_aborted on new data
+                    link_aborted = 0;
             }
         }
         else {
             // Liberty Way lost
+            // Abort Liberty-Way
             if (link_command == 1 && !link_aborted)
                 liberty_link_abort();
 
@@ -209,7 +235,7 @@ void liberty_link(void) {
         }
     }
 
-    if (!link_aborted && (/*error > 1 ||*/ !link_allowed || link_command == 6)) {
+    if (!link_aborted && (/*error > 1 || number_used_sats < LINK_MIN_NUM_SATS || */ !link_allowed || link_command == 6)) {
         // Abort Liberty Way if not allowed or an error occurs
         liberty_link_abort();
     }
@@ -323,16 +349,16 @@ void liberty_link(void) {
             l_lat_setpoint = l_lat_waypoint;
             l_lon_setpoint = l_lon_waypoint;
 
-            /*if (link_lost_counter < LINK_LOST_CYCLES) {
+            if (link_lost_counter < LINK_LOST_CYCLES) {
                 // Check if Liberty Link available before descending
                 // Pressure waypoint
-                if (pid_alt_setpoint < altitude_waypoint)
+                if (pid_alt_setpoint < pressure_waypoint)
                     // Increase pressure (decrease altitude)
                     pid_alt_setpoint += WAYPOINT_ALTITUDE_TERM;
-                else if (pid_alt_setpoint > altitude_waypoint)
+                else if (pid_alt_setpoint > pressure_waypoint)
                     // Decrease pressure (increase altitude)
                     pid_alt_setpoint -= WAYPOINT_ALTITUDE_TERM;
-            }*/
+            }
         }
     }
 }
@@ -352,7 +378,7 @@ void liberty_link_abort(void) {
     direct_throttle_control = 1500;
 
     // Fly up sharply to prevent a collision
-    pid_alt_setpoint = actual_pressure - NEAR_PRESSURE_ASCEND;
+    pid_alt_setpoint = actual_pressure - ABORT_PRESSURE_ASCEND;
 
     // Set current GPS position as setpoint
     l_lat_setpoint = l_lat_gps;

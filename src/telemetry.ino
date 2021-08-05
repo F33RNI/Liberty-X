@@ -155,54 +155,53 @@ void telemetry(void) {
 #ifdef LIBERTY_LINK
 	// Send waypoint flags and flight step for gps and altitude if Liberty-Link is enabled
 	else if (telemetry_loop_counter == 27) {
-		if (link_new_waypoint_altitude && link_new_waypoint_gps)
-			telemetry_send_byte = 30 + link_waypoint_step;
-		else if (link_new_waypoint_gps)
-			telemetry_send_byte = 20 + link_waypoint_step;
-		else if (link_new_waypoint_altitude)
-			telemetry_send_byte = 10 + link_waypoint_step;
-		else
+		//if (link_new_waypoint_altitude && link_new_waypoint_gps)
+		//	telemetry_send_byte = 30 + link_waypoint_step;
+		//else if (link_new_waypoint_gps)
+		//	telemetry_send_byte = 20 + link_waypoint_step;
+		//else if (link_new_waypoint_altitude)
+		//	telemetry_send_byte = 10 + link_waypoint_step;
+		//else
 			telemetry_send_byte = link_waypoint_step;
 	}
 #else
-	// Send nothing is Liberty-Link is disabled
+	// Send nothing if Liberty-Link is disabled
 	else if (telemetry_loop_counter == 27)
 		telemetry_send_byte = 0;
 #endif
 
-	// Send the check-byte
-	else if (telemetry_loop_counter == 28)telemetry_send_byte = telemetry_check_byte;
-
-	// Send the first suffix
-	else if (telemetry_loop_counter == 29)telemetry_send_byte = TELEMETRY_SUFFIX_1;
-
-	// Send the second suffix
-	else if (telemetry_loop_counter == 30)telemetry_send_byte = TELEMETRY_SUFFIX_2;
-
-#ifdef LIBERTY_LINK
-	if (!link_allowed) {
-		// Reset the telemetry_loop_counter variable after 125 loops. This way the telemetry data is send every 125 * 4ms = 500ms
-		if (telemetry_loop_counter >= 125)
-			telemetry_loop_counter = 0;
-	}
-	else {
-		// Immediately reset the counter if in liberty-link mode
-		if (telemetry_loop_counter >= 31)
-			telemetry_loop_counter = 0;
+#ifdef LUX_METER
+	// Send ambient illumination
+	else if (telemetry_loop_counter == 28) {
+		telemetry_send_byte = lux_sqrt_data;
 	}
 #else
-	// Reset the telemetry_loop_counter variable after 125 loops. This way the telemetry data is send every 125 * 4ms = 500ms
-	if (telemetry_loop_counter == 125)
-		telemetry_loop_counter = 0;
+	// Send nothing if lux meter is disabled
+	else if (telemetry_loop_counter == 28)
+		telemetry_send_byte = 0;
 #endif
 
-	if (telemetry_loop_counter > 0 && telemetry_loop_counter <= 30) {
+
+	// Send the check-byte
+	else if (telemetry_loop_counter == 29)telemetry_send_byte = telemetry_check_byte;
+
+	// Send the first suffix
+	else if (telemetry_loop_counter == 30)telemetry_send_byte = TELEMETRY_SUFFIX_1;
+
+	// Send the second suffix
+	else if (telemetry_loop_counter == 31)telemetry_send_byte = TELEMETRY_SUFFIX_2;
+
+	if (telemetry_loop_counter > 0 && telemetry_loop_counter <= 31) {
 		// XOR every send_byte
 		telemetry_check_byte ^= telemetry_send_byte;
 
 		// Push data to the serial port
 		TELEMETRY_SERIAL.write(telemetry_send_byte);
 	}
+
+	// Reset the telemetry_loop_counter variable after 125 loops. This way the telemetry data is send every 125 * 4ms = 500ms
+	if (telemetry_loop_counter >= 125)
+		telemetry_loop_counter = 0;
 }
 
 #endif

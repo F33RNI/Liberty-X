@@ -58,6 +58,16 @@ void channel_collector(void) {
     }
 #endif
 
+#ifdef SONARUS
+    // Anti-collision function
+    if (sonar_1_raw > 0) {
+        if (sonar_1_raw < SONARUS_SPRING_STOP)
+            pid_pitch_setpoint_base += 2000;
+        else if (sonar_1_raw < SONARUS_SPRING_START)
+            pid_pitch_setpoint_base += map(sonar_1_raw, SONARUS_SPRING_START, SONARUS_SPRING_STOP, 1500, 2000);
+    }
+#endif
+
     // Clip values
     if (pid_roll_setpoint_base > 2000)pid_roll_setpoint_base = 2000;
     if (pid_roll_setpoint_base < 1000)pid_roll_setpoint_base = 1000;

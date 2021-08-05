@@ -46,7 +46,7 @@ const float VOLTAGE_ADC_DIVIDER PROGMEM = 109.88;
 /*            Motors            */
 /********************************/
 // Disable motors spinning in flight. Useful for debug
-//#define DISABLE_MOTORS
+#define DISABLE_MOTORS
 
 // Takeoff throttle
 const int32_t MANUAL_TAKEOFF_THROTTLE PROGMEM = 1492;
@@ -110,6 +110,39 @@ const uint16_t GPS_LOST_CYCLES PROGMEM = 250;
 #define ADJUST_RULE				gimbal_pitch = channel_8
 
 
+/********************************************************/
+/*            Sonarus ultrasonic rangefinder            */
+/********************************************************/
+// Used to prevent collisions and to improve the automatic take-off and motors shutdown function (in Liberty-Link)
+#define SONARUS
+
+#ifdef SONARUS
+// Request distancee value every 20 * 4ms = 80ms
+const uint8_t SONARUS_REQUST_CYCLES PROGMEM = 20;
+
+// Speed of sound in m/s * 10000
+const uint16_t SOUND_SPEED PROGMEM = 343;
+
+// Minimum distance (in cm * 2) at which collision protection begins (25 * 2 = 50cm)
+const uint8_t SONARUS_SPRING_START PROGMEM = 25;
+
+// At what distance (in cm * 2) the maximum pitch back will be set (5 * 2 = 10cm)
+const uint8_t SONARUS_SPRING_STOP PROGMEM = 5;
+#endif
+
+
+/*************************************/
+/*            Light meter            */
+/*************************************/
+// Used to dynamically change the camera exposure depending on the illumination of the ARUco marker
+#define LUX_METER
+
+#ifdef LUX_METER
+// Request LUX value every 25 * 4ms = 100ms
+const uint8_t LUX_REQUST_CYCLES PROGMEM = 25;
+#endif
+
+
 /*****************************************************/
 /*            Liberty-Link implementation            */
 /*****************************************************/
@@ -117,14 +150,20 @@ const uint16_t GPS_LOST_CYCLES PROGMEM = 250;
 
 #ifdef LIBERTY_LINK
 // Unique pair of ASCII symbols
-const uint8_t LINK_SUFFIX_1 PROGMEM = 'L';
-const uint8_t LINK_SUFFIX_2 PROGMEM = 'X';
+const uint8_t LINK_SUFFIX_1 PROGMEM = 0xEE;
+const uint8_t LINK_SUFFIX_2 PROGMEM = 0xEE;
 
 // If no data in 125 * 4ms = 500ms the connection will be considered lost
 const uint8_t LINK_LOST_CYCLES PROGMEM = 125;
 
 // Max GPS setpoint distance (at what maximum distance can the GPS setpoint mode and descent be immediately activated)
 const int32_t GPS_SETPOINT_MAX_DISTANCE PROGMEM = 5;
+
+// The minimum number of satellites required for Liberty-Link to work
+const uint8_t LINK_MIN_NUM_SATS PROGMEM = 5;
+
+// How many pascals to reduce the pressure (raise the altitude) when the liberty-way aborted
+const float ABORT_PRESSURE_ASCEND PROGMEM = 20;
 
 // How many pascals to reduce the pressure (raise the altitude) when the drone is closer than the GPS_SETPOINT_MAX_DISTANCE distance
 const float NEAR_PRESSURE_ASCEND PROGMEM = 10;
@@ -140,35 +179,43 @@ const float WAYPOINT_GPS_MAX_FACTOR PROGMEM = 0.05;
 
 // Altitude waypoint move speed term (larger = faster)
 const float WAYPOINT_ALTITUDE_TERM PROGMEM = 0.020;
+
+#ifdef SONARUS
+// At what distance (in cm * 2) the motors can be turned off (30 * 2 = 60cm)
+const uint8_t SONARUS_LINK_MTOF PROGMEM = 30;
+#endif
 #endif
 
 
 /***********************************/
 /*            Telemetry            */
 /***********************************/
-#define TELEMETRY
+//#define TELEMETRY
 
 #ifdef TELEMETRY
 // Unique pair of ASCII symbols
-const uint8_t TELEMETRY_SUFFIX_1 PROGMEM = 'L';
-const uint8_t TELEMETRY_SUFFIX_2 PROGMEM = 'X';
+const uint8_t TELEMETRY_SUFFIX_1 PROGMEM = 0xEE;
+const uint8_t TELEMETRY_SUFFIX_2 PROGMEM = 0xEE;
+
+// How many bytes will be handled at the same time
+const uint8_t BURST_BYTES PROGMEM = 4;
 #endif
 
 
 /**********************************/
 /*            Debugger            */
 /**********************************/
-//#define DEBUGGER
+#define DEBUGGER
 
 #ifdef DEBUGGER
 // Send debug every 25 * 4ms = 100ms
 const uint16_t DEBUG_SEND_CYCLES PROGMEM = 25;
 
 // Variables to debug
-#define DEBUG_VAR_1				actual_pressure
-#define DEBUG_VAR_2				l_lat_gps
-#define DEBUG_VAR_3				l_lon_gps
-//#define DEBUG_VAR_4				gps_pitch_adjust
+#define DEBUG_VAR_1				sonar_1_raw
+#define DEBUG_VAR_2				sonar_2_raw
+//#define DEBUG_VAR_3				l_lon_gps
+//#define DEBUG_VAR_4				micros() - loop_timer
 #endif
 
 
@@ -182,7 +229,7 @@ const uint16_t DEBUG_SEND_CYCLES PROGMEM = 25;
 #define GPS_SERIAL				Serial2
 
 // Telemetry, Liberty-Link and Debugger port baud rate
-const uint32_t TELEMETRY_BAUDRATE PROGMEM = 57600;
+const uint32_t TELEMETRY_BAUDRATE PROGMEM = 115200;
 
 
 /*************************************/

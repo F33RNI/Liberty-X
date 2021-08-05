@@ -30,7 +30,14 @@ const uint32_t MAX_ALLOWED_LOOP_PERIOD PROGMEM = 4050;
 const uint8_t IMU_ADDRESS PROGMEM = 0x68;
 const uint8_t BAROMETER_ADDRESS PROGMEM = 0x77;
 const uint8_t COMPASS_ADDRESS PROGMEM = 0x1E;
+#ifdef LUX_METER
+const uint8_t LUX_METER_ADDRESS PROGMEM = 0x23;
+#endif
+#ifdef SONARUS
+const uint8_t SONARUS_ADDRESS PROGMEM = 0xEE;
+#endif
 const uint8_t VOLTMETER_PIN PROGMEM = 4;
+
 
 // GPS UBLOX predefined messages for setup
 const uint8_t GPS_DISABLE_GPGSV[11] PROGMEM = { 0xB5, 0x62, 0x06, 0x01, 0x03, 0x00, 0xF0, 0x03, 0x00, 0xFD, 0x15 };

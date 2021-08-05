@@ -48,8 +48,8 @@ void barometer_setup(void) {
 	}
 
 	// This values is pre-calculated to offload the main program loop
-	OFF_C2 = C[2] * pow(2, 16);
-	SENS_C1 = C[1] * pow(2, 15);
+	OFF_C2 = C[2] * (int64_t)65536;
+	SENS_C1 = C[1] * (int64_t)32768;
 
     // Stabilize pressure with a few readings
     for (count_var = 0; count_var < 500; count_var++) {
@@ -141,9 +141,9 @@ void barometer_handler(void) {
         dT <<= 8;
         dT *= -1;
         dT += raw_temperature;
-        OFF = OFF_C2 + ((int64_t)dT * (int64_t)C[4]) / pow(2, 7);
-        SENS = SENS_C1 + ((int64_t)dT * (int64_t)C[3]) / pow(2, 8);
-        P = ((raw_pressure * SENS) / pow(2, 21) - OFF) / pow(2, 15);
+        OFF = OFF_C2 + ((int64_t)dT * (int64_t)C[4]) / 128LL;
+        SENS = SENS_C1 + ((int64_t)dT * (int64_t)C[3]) / 256LL;
+        P = ((raw_pressure * SENS) / 2097152UL - OFF) / 32768UL; 2000L + dT * C[6] / 8388608L;
 
         // 20 location rotating memory to get a smoother pressure value
         // Subtract the current memory position to make room for the new value
