@@ -46,10 +46,10 @@ const float VOLTAGE_ADC_DIVIDER PROGMEM = 109.88;
 /*            Motors            */
 /********************************/
 // Disable motors spinning in flight. Useful for debug
-#define DISABLE_MOTORS
+//#define DISABLE_MOTORS
 
 // Takeoff throttle
-const int32_t MANUAL_TAKEOFF_THROTTLE PROGMEM = 1492;
+const int32_t MANUAL_TAKEOFF_THROTTLE PROGMEM = 0; //1500
 
 // Throttle in flight_mode = 1 will be passed through the exp() function to reduce the sharpness
 // Excel formula (input: column A, output: column B):
@@ -63,15 +63,18 @@ const float BATTERY_COMPENSATION PROGMEM = 65.0;
 // IDLE speed (minimum speed) of the motors 
 const uint16_t MOTOR_IDLE_SPEED PROGMEM = 1200;
 
+// Takeoff detected when (acc_z_average_short_total / 25 - acc_total_vector_at_start) > AUTO_TAKEOFF_ACC_THRESHOLD
+const int32_t AUTO_TAKEOFF_ACC_THRESHOLD PROGMEM = 800;
+
 
 /*****************************/
 /*            IMU            */
 /*****************************/
 // Level calibration value. Increasing causes moving to the right (>). Uncomment to overwrite the read from EEPROM
-#define ACC_CALIBRATION_ROLL	15
+#define ACC_CALIBRATION_ROLL	-30
 
 // Level calibration value. Increasing causes moving backward (\/). Uncomment to overwrite the read from EEPROM
-#define ACC_CALIBRATION_PITCH	1050
+#define ACC_CALIBRATION_PITCH	1070
 
 // Pring level calibration values to the serial port
 #define PRINT_LEVEL_CALIBRATION
@@ -99,8 +102,15 @@ const uint16_t PRESSURE_STAB_N PROGMEM = 1000;
 /*****************************/
 /*            GPS            */
 /*****************************/
-// If no data in 250 * 4ms = 1000ms the gps will be considered lost
-const uint16_t GPS_LOST_CYCLES PROGMEM = 250;
+// Baud rate of GPS mixer serial port
+const uint32_t GPS_BAUD_RATE = 115200;
+
+// If no data in 100 * 4ms = 400ms the gps will be considered lost
+const uint8_t GPS_LOST_CYCLES PROGMEM = 100;
+
+// Unique pair of suffix
+const uint8_t GPS_SUFFIX_1 PROGMEM = 0xEE;
+const uint8_t GPS_SUFFIX_2 PROGMEM = 0xEF;
 
 
 /********************************************/
@@ -117,17 +127,29 @@ const uint16_t GPS_LOST_CYCLES PROGMEM = 250;
 #define SONARUS
 
 #ifdef SONARUS
+// Whether to detect liftoff using sonar 2. Comment to determine takeoff based on acceleration only
+//#define SONARUS_TAKEOFF_DETECTION
+
+// Determine that the drone has taken off if the distance from the sonar has changed more than this number
+#ifdef SONARUS_TAKEOFF_DETECTION
+const uint16_t SONARUS_TAKEOFF_INCREMENT PROGMEM = 9;
+#endif
+
+
 // Request distancee value every 20 * 4ms = 80ms
 const uint8_t SONARUS_REQUST_CYCLES PROGMEM = 20;
 
 // Speed of sound in m/s * 10000
 const uint16_t SOUND_SPEED PROGMEM = 343;
 
-// Minimum distance (in cm * 2) at which collision protection begins (25 * 2 = 50cm)
-const uint8_t SONARUS_SPRING_START PROGMEM = 25;
+// Minimum distance (in mm) at which collision protection begins (default: 1000)
+const uint16_t SONARUS_SPRING_START PROGMEM = 1000;
 
-// At what distance (in cm * 2) the maximum pitch back will be set (5 * 2 = 10cm)
-const uint8_t SONARUS_SPRING_STOP PROGMEM = 5;
+// At what distance (in mm) the maximum pitch back will be set (default: 100)
+const uint16_t SONARUS_SPRING_STOP PROGMEM = 100;
+
+// Maximum backward pitch value (1500 + SONARUS_MAX_PITCH)
+const uint16_t SONARUS_MAX_PITCH PROGMEM = 200;
 #endif
 
 
@@ -135,7 +157,7 @@ const uint8_t SONARUS_SPRING_STOP PROGMEM = 5;
 /*            Light meter            */
 /*************************************/
 // Used to dynamically change the camera exposure depending on the illumination of the ARUco marker
-#define LUX_METER
+//#define LUX_METER
 
 #ifdef LUX_METER
 // Request LUX value every 25 * 4ms = 100ms
@@ -151,7 +173,7 @@ const uint8_t LUX_REQUST_CYCLES PROGMEM = 25;
 #ifdef LIBERTY_LINK
 // Unique pair of ASCII symbols
 const uint8_t LINK_SUFFIX_1 PROGMEM = 0xEE;
-const uint8_t LINK_SUFFIX_2 PROGMEM = 0xEE;
+const uint8_t LINK_SUFFIX_2 PROGMEM = 0xEF;
 
 // If no data in 125 * 4ms = 500ms the connection will be considered lost
 const uint8_t LINK_LOST_CYCLES PROGMEM = 125;
@@ -159,17 +181,23 @@ const uint8_t LINK_LOST_CYCLES PROGMEM = 125;
 // Max GPS setpoint distance (at what maximum distance can the GPS setpoint mode and descent be immediately activated)
 const int32_t GPS_SETPOINT_MAX_DISTANCE PROGMEM = 5;
 
+// At what pressure difference (between the pressure_waypoint and actual_pressure), 
+// the variable pid_alt_setpoint will be assigned the value of the pressure_waypoint (like a GPS_SETPOINT_MAX_DISTANCE)
+const float PRESSURE_SETPOINT_ACTIVATION PROGMEM = 30;
+
+// Difference between previous and new GPS coordinates
+// If the difference is greater than the GPS_NEW_WAYPOINT_DISTANCE, a new waypoint will be set
+// Set to 0 to accept all new coordinates as new waypoints
+const int32_t GPS_NEW_WAYPOINT_DISTANCE PROGMEM = 0;
+
 // The minimum number of satellites required for Liberty-Link to work
 const uint8_t LINK_MIN_NUM_SATS PROGMEM = 5;
 
 // How many pascals to reduce the pressure (raise the altitude) when the liberty-way aborted
 const float ABORT_PRESSURE_ASCEND PROGMEM = 20;
 
-// How many pascals to reduce the pressure (raise the altitude) when the drone is closer than the GPS_SETPOINT_MAX_DISTANCE distance
-const float NEAR_PRESSURE_ASCEND PROGMEM = 10;
-
-// How many pascals to reduce the pressure (raise the altitude) when the drone is farther than the GPS_SETPOINT_MAX_DISTANCE distance
-const float FAR_PRESSURE_ASCEND PROGMEM = 20;
+// How many pascals to reduce the pressure (raise the altitude) before GPS flight
+const float LINK_PRESSURE_ASCEND PROGMEM = 20;
 
 // GPS waypoint move speed factor on short distances (default = 0.05, larger = faster)
 const float WAYPOINT_GPS_MIN_FACTOR PROGMEM = 0.015;
@@ -177,12 +205,28 @@ const float WAYPOINT_GPS_MIN_FACTOR PROGMEM = 0.015;
 // GPS waypoint move speed factor on large distances (default = 0.20, larger = faster)
 const float WAYPOINT_GPS_MAX_FACTOR PROGMEM = 0.05;
 
-// Altitude waypoint move speed term (larger = faster)
-const float WAYPOINT_ALTITUDE_TERM PROGMEM = 0.020;
+// Altitude waypoint move speed term (default = 0.022, larger = faster)
+const float WAYPOINT_ALTITUDE_TERM PROGMEM = 0.025;
 
 #ifdef SONARUS
-// At what distance (in cm * 2) the motors can be turned off (30 * 2 = 60cm)
-const uint8_t SONARUS_LINK_MTOF PROGMEM = 30;
+// Allow motor shutdown only when sonar_2_raw value is greater than 0 and lower than SONARUS_LINK_MTOF
+// Comment to allow motor shutdown (with Liberty-Link command) at any height
+#define SONARUS_MTOF_PROTECTION
+
+// At what distance (in mm) the motors can be turned off (default: 500)
+#ifdef SONARUS_MTOF_PROTECTION
+const uint16_t SONARUS_LINK_MTOF PROGMEM = 500;
+#endif
+
+// Decrease altitude upon reaching the setpoint not by pressure, but using sonar
+// Comment use pressure waypoint only
+#define SONARUS_LINK_STAB
+
+// How high (in mm) the drone will be above the platform in setpoit mode (default: 900)
+#ifdef SONARUS_LINK_STAB
+const float SONARUS_LINK_SETPOINT PROGMEM = 900;
+#endif
+
 #endif
 #endif
 
@@ -190,14 +234,14 @@ const uint8_t SONARUS_LINK_MTOF PROGMEM = 30;
 /***********************************/
 /*            Telemetry            */
 /***********************************/
-//#define TELEMETRY
+#define TELEMETRY
 
 #ifdef TELEMETRY
 // Unique pair of ASCII symbols
 const uint8_t TELEMETRY_SUFFIX_1 PROGMEM = 0xEE;
-const uint8_t TELEMETRY_SUFFIX_2 PROGMEM = 0xEE;
+const uint8_t TELEMETRY_SUFFIX_2 PROGMEM = 0xEF;
 
-// How many bytes will be handled at the same time
+// How many bytes will be transmitted at the same time (in liberty-link mode)
 const uint8_t BURST_BYTES PROGMEM = 4;
 #endif
 
@@ -205,17 +249,17 @@ const uint8_t BURST_BYTES PROGMEM = 4;
 /**********************************/
 /*            Debugger            */
 /**********************************/
-#define DEBUGGER
+//#define DEBUGGER
 
 #ifdef DEBUGGER
 // Send debug every 25 * 4ms = 100ms
 const uint16_t DEBUG_SEND_CYCLES PROGMEM = 25;
 
 // Variables to debug
-#define DEBUG_VAR_1				sonar_1_raw
-#define DEBUG_VAR_2				sonar_2_raw
-//#define DEBUG_VAR_3				l_lon_gps
-//#define DEBUG_VAR_4				micros() - loop_timer
+//#define DEBUG_VAR_1				sonar_1_raw
+//#define DEBUG_VAR_2				sonar_2_raw
+//#define DEBUG_VAR_3				sonar_2_prev
+//#define DEBUG_VAR_4				sonar_2_at_start
 #endif
 
 

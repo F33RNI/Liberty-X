@@ -90,14 +90,19 @@ void lux_meter(void) {
 		// Request 2 bytes from sensor
 		HWire.requestFrom(LUX_METER_ADDRESS, 2);
 
-		// Read 2 bytes from sensor (to convert to lux, divide by 0.54)
+		// Read 2 bytes from sensor
 		lux_raw_data = HWire.read() << 8 | HWire.read();
 
-		// Convert to sinle byte (just find sqrt)
-		lux_raw_data = sqrt(lux_raw_data);
-		if (lux_raw_data > 255)
-			lux_raw_data = 255;
-		lux_sqrt_data = lux_raw_data;
+		// Convert to lux (divide by 0.54)
+		lux_data = lux_raw_data / 0.54;
+
+		// Compress value
+		lux_data = pow(lux_data, 0.475);
+		if (lux_data > 254.0)
+			lux_data = 254.0;
+
+		// Convert to sinle byte
+		lux_sqrt_data = lux_data;
 	}
 }
 #endif

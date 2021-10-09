@@ -118,15 +118,7 @@ void telemetry(void) {
 	else if (telemetry_loop_counter == 16)
 		telemetry_send_byte = heading_lock_enabled;
 
-	// Send the number_used_sats variable as a byte
-	else if (telemetry_loop_counter == 17)
-		telemetry_send_byte = number_used_sats;
-
-	// Send the fix_type variable as a byte
-	else if (telemetry_loop_counter == 18)
-		telemetry_send_byte = fix_type;
-
-	else if (telemetry_loop_counter == 19) {
+	else if (telemetry_loop_counter == 17) {
 		// Store the latitude position as it can change during the next loop
 		telemetry_buffer_bytes = l_lat_gps;
 
@@ -135,11 +127,11 @@ void telemetry(void) {
 	}
 
 	// Send the next bytes of the latitude position variable
-	else if (telemetry_loop_counter == 20)telemetry_send_byte = telemetry_buffer_bytes >> 16;
-	else if (telemetry_loop_counter == 21)telemetry_send_byte = telemetry_buffer_bytes >> 8;
-	else if (telemetry_loop_counter == 22)telemetry_send_byte = telemetry_buffer_bytes;
+	else if (telemetry_loop_counter == 18)telemetry_send_byte = telemetry_buffer_bytes >> 16;
+	else if (telemetry_loop_counter == 19)telemetry_send_byte = telemetry_buffer_bytes >> 8;
+	else if (telemetry_loop_counter == 20)telemetry_send_byte = telemetry_buffer_bytes;
 
-	else if (telemetry_loop_counter == 23) {
+	else if (telemetry_loop_counter == 21) {
 		// Store the longitude position as it can change during the next loop
 		telemetry_buffer_bytes = l_lon_gps;
 
@@ -148,13 +140,29 @@ void telemetry(void) {
 	}
 
 	// Send the next 8 bytes of the longitude position variable
-	else if (telemetry_loop_counter == 24)telemetry_send_byte = telemetry_buffer_bytes >> 16;
-	else if (telemetry_loop_counter == 25)telemetry_send_byte = telemetry_buffer_bytes >> 8;
-	else if (telemetry_loop_counter == 26)telemetry_send_byte = telemetry_buffer_bytes;
+	else if (telemetry_loop_counter == 22)telemetry_send_byte = telemetry_buffer_bytes >> 16;
+	else if (telemetry_loop_counter == 23)telemetry_send_byte = telemetry_buffer_bytes >> 8;
+	else if (telemetry_loop_counter == 24)telemetry_send_byte = telemetry_buffer_bytes;
+
+	// Send the number_used_sats variable as a byte
+	else if (telemetry_loop_counter == 25)
+		telemetry_send_byte = number_used_sats;
+
+	else if (telemetry_loop_counter == 26) {
+	// Store ground speed as it can change during the next loop
+	telemetry_buffer_bytes = ground_speed;
+
+	// Send first 8 bytes of ground_speed variable
+	telemetry_send_byte = telemetry_buffer_bytes >> 8;
+	}
+
+	// Send last 8 bytes of the ground_speed variable
+	else if (telemetry_loop_counter == 27)
+		telemetry_send_byte = telemetry_buffer_bytes;
 
 #ifdef LIBERTY_LINK
 	// Send waypoint flags and flight step for gps and altitude if Liberty-Link is enabled
-	else if (telemetry_loop_counter == 27) {
+	else if (telemetry_loop_counter == 28) {
 		//if (link_new_waypoint_altitude && link_new_waypoint_gps)
 		//	telemetry_send_byte = 30 + link_waypoint_step;
 		//else if (link_new_waypoint_gps)
@@ -166,32 +174,32 @@ void telemetry(void) {
 	}
 #else
 	// Send nothing if Liberty-Link is disabled
-	else if (telemetry_loop_counter == 27)
+	else if (telemetry_loop_counter == 28)
 		telemetry_send_byte = 0;
 #endif
 
 #ifdef LUX_METER
 	// Send ambient illumination
-	else if (telemetry_loop_counter == 28) {
-		telemetry_send_byte = lux_sqrt_data;
+	else if (telemetry_loop_counter == 29) {
+		telemetry_send_byte = lux_sqrt_data + 1;
 	}
 #else
 	// Send nothing if lux meter is disabled
-	else if (telemetry_loop_counter == 28)
+	else if (telemetry_loop_counter == 29)
 		telemetry_send_byte = 0;
 #endif
 
 
 	// Send the check-byte
-	else if (telemetry_loop_counter == 29)telemetry_send_byte = telemetry_check_byte;
+	else if (telemetry_loop_counter == 30)telemetry_send_byte = telemetry_check_byte;
 
 	// Send the first suffix
-	else if (telemetry_loop_counter == 30)telemetry_send_byte = TELEMETRY_SUFFIX_1;
+	else if (telemetry_loop_counter == 31)telemetry_send_byte = TELEMETRY_SUFFIX_1;
 
 	// Send the second suffix
-	else if (telemetry_loop_counter == 31)telemetry_send_byte = TELEMETRY_SUFFIX_2;
+	else if (telemetry_loop_counter == 32)telemetry_send_byte = TELEMETRY_SUFFIX_2;
 
-	if (telemetry_loop_counter > 0 && telemetry_loop_counter <= 31) {
+	if (telemetry_loop_counter > 0 && telemetry_loop_counter <= 32) {
 		// XOR every send_byte
 		telemetry_check_byte ^= telemetry_send_byte;
 

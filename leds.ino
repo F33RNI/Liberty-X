@@ -237,6 +237,20 @@ void leds_flight_mode_signal(void) {
 }
 
 /// <summary>
+/// Wait signal on startup
+/// </summary>
+void leds_startup_wait(void) {
+	for (count_var = 0; count_var < 1000; count_var++) {
+		// Blink with LEDs
+		if (count_var % 125 == 0)
+			leds_calibration_signal();
+
+		// Simulate main loop
+		delayMicroseconds(LOOP_PERIOD);
+	}
+}
+
+/// <summary>
 /// Changes state of the onboard LEDs
 /// </summary>
 /// <param name="red"> New red LED value </param>
@@ -256,4 +270,13 @@ void leds_onboard(boolean red, boolean green) {
 	// Store last values
 	leds_red_state = red;
 	leds_green_state = green;
+}
+
+/// <summary>
+/// Sets LED state
+/// </summary>
+/// <param name="state"></param>
+void set_buildin_led(boolean state) {
+	digitalWrite(LED_BUILTIN, !state);
+	buildin_led_state = state;
 }

@@ -128,16 +128,6 @@ void imu_calibrate_gyro(void) {
 	TELEMETRY_SERIAL.println(F("Calibrating gyro..."));
 #endif
 
-	// Wait some time before calibration
-	for (count_var = 0; count_var < 1000; count_var++) {
-		// Blink with LEDs
-		if (count_var % 125 == 0)
-			leds_calibration_signal();
-
-		// Simulate main loop
-		delayMicroseconds(LOOP_PERIOD);
-	}
-
 	// Reset gyro calibration values
 	gyro_roll_cal = 0;
 	gyro_pitch_cal = 0;

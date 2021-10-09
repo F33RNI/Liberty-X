@@ -119,12 +119,27 @@ void receiver_start_stop(void) {
 		l_lat_setpoint = l_lat_gps;
 		l_lon_setpoint = l_lon_gps;
 
+		// Reset GPS corrections
+		l_lat_gps_float_adjust = 0;
+		l_lon_gps_float_adjust = 0;
+		waypoint_move_factor = 0;
+		pid_gps_reset();
+
 		// Reset some variables
 		throttle = MOTOR_IDLE_SPEED;
 		angle_pitch = angle_pitch_acc;
 		angle_roll = angle_roll_acc;
 		course_lock_heading = angle_yaw;
 		acc_total_vector_at_start = acc_total_vector;
+#ifdef SONARUS
+#ifdef SONARUS_TAKEOFF_DETECTION
+		sonar_2_at_start = sonar_2_raw;
+#endif
+#ifdef SONARUS_LINK_STAB
+		pid_output_sonar = 0;
+		pid_i_mem_sonar = 0;
+#endif
+#endif
 		acc_alt_integrated = 0;
 
 		if (MANUAL_TAKEOFF_THROTTLE > 1100 && MANUAL_TAKEOFF_THROTTLE < 1700) {
@@ -137,6 +152,10 @@ void receiver_start_stop(void) {
 			pid_roll_pitch_yaw_reset();
 			pid_altitude_reset();
 			pid_gps_reset();
+#ifdef SONARUS_LINK_STAB
+			pid_output_sonar = 0;
+			pid_i_mem_sonar = 0;
+#endif
 
 			// Raise altitude to some point
 			pid_alt_setpoint = ground_pressure - PRESSURE_TAKEOFF;
@@ -165,7 +184,7 @@ void receiver_start_stop(void) {
 		if (throttle == 1750) {
 			// If take-off is not detected when the throttle has reached 1700: error = 6 and lower the throttle
 			error = 6;
-			throttle = MOTOR_IDLE_SPEED;
+			//throttle = MOTOR_IDLE_SPEED;
 		}
 		if (channel_3 <= 1480) {
 			// When the throttle is below the center stick position
@@ -177,8 +196,14 @@ void receiver_start_stop(void) {
 			pid_roll_pitch_yaw_reset();
 			pid_altitude_reset();
 			pid_gps_reset();
+#ifdef SONARUS_LINK_STAB
+			pid_output_sonar = 0;
+			pid_i_mem_sonar = 0;
+#endif
 		}
-		if (acc_z_average_short_total / 25 - acc_total_vector_at_start > 800) {
+#if defined(SONARUS) && defined(SONARUS_TAKEOFF_DETECTION)
+		if (sonar_2_raw > sonar_2_prev + SONARUS_TAKEOFF_INCREMENT && sonar_2_prev > sonar_2_at_start + SONARUS_TAKEOFF_INCREMENT
+			|| acc_z_average_short_total / 25 - acc_total_vector_at_start > AUTO_TAKEOFF_ACC_THRESHOLD) {
 			// A take-off is detected when the quadcopter is accelerating
 			// Set the take-off detected variable to 1 to indicate a take-off
 			takeoff_detected = 1;
@@ -188,7 +213,7 @@ void receiver_start_stop(void) {
 
 			if (throttle > 1400 && throttle < 1700) {
 				// If the automated throttle is between 1400 and 1600us during take-off, calculate take-off throttle
-				takeoff_throttle = throttle - 1530;
+				takeoff_throttle = throttle - 1580; //1530
 			}
 			else {
 				// No take-off throttle is calculated if the automated throttle is not between 1400 and 1700 during take-off
@@ -196,6 +221,43 @@ void receiver_start_stop(void) {
 				error = 7;
 			}
 		}
+#else
+		if (acc_z_average_short_total / 25 - acc_total_vector_at_start > AUTO_TAKEOFF_ACC_THRESHOLD) {
+			// A take-off is detected when the quadcopter is accelerating
+			// Set the take-off detected variable to 1 to indicate a take-off
+			takeoff_detected = 1;
+
+			// Set the altitude setpoint
+			pid_alt_setpoint = ground_pressure - PRESSURE_TAKEOFF;
+
+			if (throttle > 1400 && throttle < 1700) {
+				// If the automated throttle is between 1400 and 1600us during take-off, calculate take-off throttle
+				takeoff_throttle = throttle - 1580; //1530
+			}
+			else {
+				// No take-off throttle is calculated if the automated throttle is not between 1400 and 1700 during take-off
+				takeoff_throttle = 0;
+				error = 7;
+			}
+		}
+#endif
+
+		// Reduce throttle to a full stop if an error occurs during takeoff
+		// For only takeoff errors: if (error == 6 || error == 7)
+		if (error) {
+			takeoff_throttle = 0;
+			takeoff_detected = 0;
+			if (throttle > 0)
+				throttle--;
+			else
+				start = 0;
+		}
+
+		// Reset link step after flight
+#ifdef LIBERTY_LINK
+		if (start == 0 && link_waypoint_step > 2)
+			link_waypoint_step = 0;
+#endif
 	}
 }
 

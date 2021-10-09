@@ -100,23 +100,27 @@ float course_a, course_b, course_c, base_course_mirrored, actual_course_mirrored
 float course_lock_heading, heading_lock_course_deviation;
 
 // GPS
-uint8_t read_serial_byte, incoming_message[100], number_used_sats, fix_type;
+uint8_t gps_buffer[20];
+uint8_t gps_buffer_position, gps_byte_previous;
+uint8_t gps_check_byte, gps_temp_byte;
+uint8_t gps_lost_counter = UINT8_MAX;
+uint8_t number_used_sats;
+uint8_t hdop;
+int16_t altitude;
+uint16_t ground_heading;
+uint16_t ground_speed;
 uint8_t gps_setpoint_set;
-uint16_t message_counter;
-int16_t gps_add_counter;
-int32_t l_lat_gps, l_lon_gps, lat_gps_previous, lon_gps_previous;
-int32_t lat_gps_actual, lon_gps_actual, l_lat_setpoint, l_lon_setpoint;
+boolean new_gps_data_available;
+int32_t l_lat_gps, l_lon_gps, l_lat_setpoint, l_lon_setpoint;
 float gps_pitch_adjust, gps_roll_adjust;
-float lat_gps_loop_add, lon_gps_loop_add, lat_gps_add, lon_gps_add;
-uint8_t new_line_found, new_gps_data_available, new_gps_data_counter;
 float l_lon_gps_float_adjust, l_lat_gps_float_adjust, gps_man_adjust_heading;
-uint16_t gps_lost_counter = UINT16_MAX;
 
 // LED
 uint8_t leds_tick_counter;
 boolean leds_red_state, leds_green_state;
 uint8_t leds_error_counter, leds_flight_mode_counter;
 uint16_t leds_loop_counter, leds_onboard_loop_counter, leds_error_loop_counter;
+boolean buildin_led_state;
 
 // Receiver
 int32_t channel_1, channel_2, channel_3, channel_4, channel_5, channel_6, channel_7, channel_8;
@@ -151,13 +155,21 @@ uint32_t telemetry_buffer_bytes;
 // Sonars
 #ifdef SONARUS
 uint8_t sonarus_cycle_counter;
-uint8_t sonar_1_raw, sonar_2_raw;
+uint16_t sonar_1_raw, sonar_2_raw;
+#ifdef SONARUS_TAKEOFF_DETECTION
+uint16_t sonar_2_at_start, sonar_2_prev;
+#endif
+#ifdef SONARUS_LINK_STAB
+float pid_i_mem_sonar, pid_sonar_setpoint, pid_last_sonar_d_error, pid_output_sonar;
+#endif
+
 #endif
 
 // Lux meter
 #ifdef LUX_METER
 uint8_t lux_cycle_counter;
 uint16_t lux_raw_data;
+float lux_data;
 uint8_t lux_sqrt_data;
 #endif
 

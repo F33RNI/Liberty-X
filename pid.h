@@ -26,7 +26,7 @@
 /*            Roll            */
 /******************************/
 // Roll P-controller (default = 1.3)
-const float PID_ROLL_P PROGMEM = 3.9;
+const float PID_ROLL_P PROGMEM = 3.8;
 
 // Roll I-controller (default = 0.04)
 const float PID_ROLL_I PROGMEM = 0.087;
@@ -42,7 +42,7 @@ const float PID_ROLL_MAX PROGMEM = 400;
 /*            Pitch            */
 /*******************************/
 // Pitch P-controller (default = 1.3)
-const float PID_PITCH_P PROGMEM = 3.9;
+const float PID_PITCH_P PROGMEM = 3.8;
 
 // Pitch I-controller (default = 0.04)
 const float PID_PITCH_I PROGMEM = 0.087;
@@ -97,5 +97,23 @@ const float PID_GPS_D PROGMEM = 12.0;
 
 // Maximum output of the PID - controller (+ / -)
 const float PID_GPS_MAX PROGMEM = 300;
+
+
+#if (defined(SONARUS) && defined(SONARUS_LINK_STAB))
+/*********************************/
+/*            Sonarus            */
+/*********************************/
+// Sonarus P-controller (default = 0.076)
+const float PID_SONARUS_P PROGMEM = 0.076;
+
+// Sonarus I-controller (default = 0.002)
+const float PID_SONARUS_I PROGMEM = 0.002;
+
+// Sonarus D-controller (default = 0.58)
+const float PID_SONARUS_D PROGMEM = 0.58;
+
+// Maximum output of the PID - controller (+ / -)
+const float PID_SONARUS_MAX PROGMEM = 100;
+#endif
 
 #endif

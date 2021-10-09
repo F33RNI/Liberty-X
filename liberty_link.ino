@@ -92,8 +92,8 @@ void liberty_link(void) {
                     pressure_waypoint = (float)((int32_t)link_buffer[3] | (int32_t)link_buffer[2] << 8 | (int32_t)link_buffer[1] << 16 | (int32_t)link_buffer[0] << 24);
 
                     if (pressure_waypoint < 1000)
-                        // Do not change pressure waypoint if less then 1000 Pa
-                        pressure_waypoint = pid_alt_setpoint;
+                        // Do not use pressure waypoint if less then 1000 Pa
+                        pressure_waypoint = 0;
 
                     // Check data range and other packet bytes
                     if (pressure_waypoint > 120000 ||
@@ -127,8 +127,8 @@ void liberty_link(void) {
                         if (link_waypoint_step == 6)
                             // If liberty-link is in the setpoint mode
                             link_new_waypoint_gps = 1;
-                        else if (abs(l_lat_setpoint - l_lat_waypoint) > GPS_SETPOINT_MAX_DISTANCE * 2
-                            || abs(l_lon_setpoint - l_lon_waypoint) > GPS_SETPOINT_MAX_DISTANCE * 2)
+                        else if (abs(l_lat_setpoint - l_lat_waypoint) > GPS_NEW_WAYPOINT_DISTANCE
+                            || abs(l_lon_setpoint - l_lon_waypoint) > GPS_NEW_WAYPOINT_DISTANCE)
                             // If liberty-link is not in the setpoint mode and it's a realy new position
                             link_new_waypoint_gps = 1;
                     }
@@ -176,7 +176,7 @@ void liberty_link(void) {
                 flight_mode = 1;
             }
             else if (link_command == 4) {
-#ifdef SONARUS
+#if (defined(SONARUS) && defined(SONARUS_MTOF_PROTECTION))
                 if (sonar_2_raw && sonar_2_raw < SONARUS_LINK_MTOF) {
                     // Turn off the motors if altitude is less than SONARUS_LINK_MTOF and not equal to 0
                     start = 0;
@@ -260,26 +260,14 @@ void liberty_link(void) {
                 // Go to step altitude waypoint calculations if takeoff detected
                 link_waypoint_step = 3;
         }
-        // Step 3. Calculate the distance and reduse the pressure setpoint and increase the altitude
+        // Step 3. Reduse the pressure setpoint to increase the altitude
         else if (link_waypoint_step == 3) {
-            if (abs(l_lat_setpoint - l_lat_waypoint) < GPS_SETPOINT_MAX_DISTANCE && abs(l_lon_setpoint - l_lon_waypoint) < GPS_SETPOINT_MAX_DISTANCE) {
-                // If the drone is nearby, slightly increase the altitude
-                if (pid_alt_setpoint - (ground_pressure - NEAR_PRESSURE_ASCEND) > 1.0)
-                    // Decrease pressure (increase altitude) until waypoint is reached
-                    pid_alt_setpoint -= WAYPOINT_ALTITUDE_TERM;
-                else
-                    // Go to gps pre-calculations as soon as the waypoint is reached
-                    link_waypoint_step = 4;
-            }
-            else {
-                // If the drone is far away, increase the altitude significantly (so as not to crash into buildings)
-                if (pid_alt_setpoint - (ground_pressure - FAR_PRESSURE_ASCEND) > 1.0)
-                    // Decrease pressure (increase altitude) until waypoint is reached
-                    pid_alt_setpoint -= WAYPOINT_ALTITUDE_TERM;
-                else
-                    // Go to gps pre-calculations as soon as the waypoint is reached
-                    link_waypoint_step = 4;
-            }
+            if (pid_alt_setpoint < ground_pressure - LINK_PRESSURE_ASCEND)
+                // Go to gps pre-calculations as soon as the waypoint is reached
+                link_waypoint_step = 4;
+            else
+                // Decrease pressure (increase altitude) until waypoint is reached
+                pid_alt_setpoint -= WAYPOINT_ALTITUDE_TERM;
         }
         // Step 4. Calculate the distance and factors to the GPS waypoint
         else if (link_waypoint_step == 4) {
@@ -298,7 +286,7 @@ void liberty_link(void) {
                     l_lon_gps_float_adjust = 0;
 
                 if (l_lat_waypoint != l_lat_waypoint_last || l_lon_waypoint != l_lon_waypoint_last) {
-                    // Reset factors because the need to be recalculated
+                    // Reset factors because they need to be recalculated
                     waypoint_lat_factor = 0;
                     waypoint_lon_factor = 0;
 
@@ -349,15 +337,47 @@ void liberty_link(void) {
             l_lat_setpoint = l_lat_waypoint;
             l_lon_setpoint = l_lon_waypoint;
 
-            if (link_lost_counter < LINK_LOST_CYCLES) {
+            if (link_lost_counter < LINK_LOST_CYCLES && pressure_waypoint > 0 && link_command != 1) {
                 // Check if Liberty Link available before descending
-                // Pressure waypoint
-                if (pid_alt_setpoint < pressure_waypoint)
-                    // Increase pressure (decrease altitude)
-                    pid_alt_setpoint += WAYPOINT_ALTITUDE_TERM;
-                else if (pid_alt_setpoint > pressure_waypoint)
+#if (defined(SONARUS) && defined(SONARUS_LINK_STAB))
+                if (pid_alt_setpoint > pressure_waypoint - PRESSURE_SETPOINT_ACTIVATION) {
+                    if (sonar_2_raw > 0) {
+                        // Sonarus PID controller
+                        if (sonarus_cycle_counter == 1) {
+                            // Disable pressure control
+                            pid_alt_setpoint = actual_pressure;
+
+                            // Calculate PID for sonar
+                            pid_error_temp = SONARUS_LINK_SETPOINT - (float)sonar_2_raw;
+                            pid_i_mem_sonar += PID_SONARUS_I * pid_error_temp;
+                            if (pid_i_mem_sonar > PID_SONARUS_MAX)pid_i_mem_sonar = PID_SONARUS_MAX;
+                            else if (pid_i_mem_sonar < PID_SONARUS_MAX * -1)pid_i_mem_sonar = PID_SONARUS_MAX * -1;
+
+                            pid_output_sonar = PID_SONARUS_P * pid_error_temp + pid_i_mem_sonar + PID_SONARUS_D * (pid_error_temp - pid_last_sonar_d_error);
+                            if (pid_output_sonar > PID_SONARUS_MAX)pid_output_sonar = PID_SONARUS_MAX;
+                            else if (pid_output_sonar < PID_SONARUS_MAX * -1)pid_output_sonar = PID_SONARUS_MAX * -1;
+
+                            pid_last_sonar_d_error = pid_error_temp;
+                        }
+                    }
+                    else {
+                        // Reset sonarus PID
+                        pid_output_sonar = 0;
+                        pid_i_mem_sonar = 0;
+                        pid_alt_setpoint = pressure_waypoint;
+                    }
+                }
+                else
                     // Decrease pressure (increase altitude)
-                    pid_alt_setpoint -= WAYPOINT_ALTITUDE_TERM;
+                    pid_alt_setpoint += WAYPOINT_ALTITUDE_TERM;
+#else
+                // Pressure waypoint
+                if (pid_alt_setpoint > pressure_waypoint - PRESSURE_SETPOINT_ACTIVATION)
+                    pid_alt_setpoint = pressure_waypoint;
+                else
+                    // Decrease pressure (increase altitude)
+                    pid_alt_setpoint += WAYPOINT_ALTITUDE_TERM;
+#endif
             }
         }
     }

@@ -39,17 +39,25 @@ void throttle_and_motors(void) {
 				throttle_exp = 1500.0 - exp((float)abs(throttle_exp - 1500) / MANUAL_TROTTLE_EXP) * MANUAL_TROTTLE_RATE;
 			}
 
-			if (flight_mode >= 2)
+			if (flight_mode >= 2) {
 				// Altitude hold
+#if (defined(SONARUS) && defined(LIBERTY_LINK) && defined(SONARUS_LINK_STAB))
+				if (link_waypoint_step == 6 && sonar_2_raw > 0 && pid_output_sonar != 0)
+					throttle = 1500 + takeoff_throttle + pid_output_sonar;
+				else
+					throttle = 1500 + takeoff_throttle + pid_output_alt;
+#else
 				throttle = 1500 + takeoff_throttle + pid_output_alt;
+#endif
+			}
 			else
 				// 1 flight mode
 				throttle = throttle_exp + takeoff_throttle;
 
 #ifdef LIBERTY_LINK
 			if (link_allowed && link_lost_counter < LINK_LOST_CYCLES && link_command == 1)
-				// Add direct throttle control if Liberty Link is working and link_command is 1 (DDC)
-				throttle += (direct_throttle_control - 1500);
+					// Add direct throttle control if Liberty Link is working and link_command is 1 (DDC)
+					throttle += (direct_throttle_control - 1500);
 #endif
 		}
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Fern H. (aka Pavel Neshumov), Liberty-X Flight controller
+ * Copyright (C) 2021 Frey Hertz (Pavel Neshumov), Liberty-X Flight controller
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,16 +43,21 @@ void setup()
     EEPROM.PageBase1 = 0x801F800;
     EEPROM.PageSize = 0x400;
 
-    // I2C setup
+    // I2C, WS2812 and timers setup
     HWire.begin();
+    leds_setup();
+    timers_setup();
 
-    // Modules setup
+    // Wait until all the hardware boots on
+    leds_startup_wait();
+
+    // UART setup
     TELEMETRY_SERIAL.begin(TELEMETRY_BAUDRATE);
     delay(250);
-    timers_setup();
     gps_setup();
+
+    // Other modules setup
     voltmeter_setup();
-    leds_setup();
     imu_setup();
     compass_setup();
 #ifdef SONARUS
@@ -115,9 +120,9 @@ void loop()
     // Read compass heading
     compass_read();
 
-    // Read raw UBLOX data from the GPS module
+    // Read data from GPS modules
     gps_read();
-    // Parse UBLOX data and perform manual corrections
+    // Handles new data from GPS
     gps_handler();
     // Execute GPS PID controllers
     pid_gps();
@@ -166,7 +171,7 @@ void loop()
             telemetry();
 
             // Immediately reset the counter if in liberty-link mode
-            if (telemetry_loop_counter >= 31) {
+            if (telemetry_loop_counter >= 32) {
                 telemetry_loop_counter = 0;
                 break;
             }
@@ -189,8 +194,10 @@ void loop()
 #endif
 
     // Check loop time
-    if (micros() - loop_timer > MAX_ALLOWED_LOOP_PERIOD)
+    if (micros() - loop_timer > MAX_ALLOWED_LOOP_PERIOD) {
+        // Set error status
         error = 2;
+    }
     while (micros() - loop_timer < LOOP_PERIOD);
     loop_timer = micros();
 }

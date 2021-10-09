@@ -19,6 +19,8 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#ifdef SONARUS
+
 /// <summary>
 /// Initilizes
 /// </summary>
@@ -26,13 +28,9 @@
 void sonarus_setup(void) {
 	// Check if the sonar system is responding
 	HWire.beginTransmission(SONARUS_ADDRESS);
-
-	// Power on sonars
-	HWire.write(0x01);
-
 	error = HWire.endTransmission();
 	while (error != 0) {
-		// Stay in the loop because the lux meter did not responde
+		// Stay in the loop because the sonarus did not responde
 		error = 5;
 		// Show curent error
 		leds_error_signal();
@@ -40,16 +38,21 @@ void sonarus_setup(void) {
 		delayMicroseconds(LOOP_PERIOD);
 	}
 
+	// Power on sonarus
+	HWire.beginTransmission(SONARUS_ADDRESS);
+	HWire.write(0x01);
+	HWire.endTransmission();
+
 	// Select continuously mode
 	HWire.beginTransmission(SONARUS_ADDRESS);
 	HWire.write(0x02);
 	HWire.write(0x01);
 	HWire.endTransmission();
 
-	// Select low-resolution (1-byte) mode (distances will be divided by 2)
+	// Select high-resolution (2-byte) mode (distances will be in mm)
 	HWire.beginTransmission(SONARUS_ADDRESS);
 	HWire.write(0x03);
-	HWire.write(0x00);
+	HWire.write(0x01);
 	HWire.endTransmission();
 
 	// Reset filter
@@ -82,10 +85,10 @@ void sonarus_setup(void) {
 	// Wait for first measurement to complete
 	delay(100);
 
-	// Set filter to 0.5 (50 -> 0x32)
+	// Set filter (default: 0.4 -> 40)
 	HWire.beginTransmission(SONARUS_ADDRESS);
 	HWire.write(0x04);
-	HWire.write(0x32);
+	HWire.write(40);
 	HWire.endTransmission();
 }
 
@@ -98,11 +101,19 @@ void sonarus(void) {
 		// Restart counter
 		sonarus_cycle_counter = 0;
 
-		// Request 2 bytes from sonar (1-byte per sonars)
-		HWire.requestFrom(SONARUS_ADDRESS, 2);
+		// Store previous value
+#ifdef SONARUS_TAKEOFF_DETECTION
+		sonar_2_prev = sonar_2_raw;
+#endif
 
-		// Read distances from both sonars (divided by 2)
-		sonar_1_raw = HWire.read();
-		sonar_2_raw = HWire.read();
+		// Request 4 bytes from sonarus (2 bytes per sonar)
+		HWire.requestFrom(SONARUS_ADDRESS, 4);
+
+		// Read distance from first sonar
+		sonar_1_raw = HWire.read() << 8 | HWire.read();
+
+		// Read distance from second sonar
+		sonar_2_raw = HWire.read() << 8 | HWire.read();
 	}
 }
+#endif
