@@ -84,7 +84,7 @@ void liberty_link_parser(void) {
                 if (link_system_byte >= 0b10000000) {
 
                     // CCC = 001 (1) -> Direct control
-                    if (link_system_byte == 0b001 
+                    if (link_system_byte == 0b001
                         && waypoints_command[waypoints_index] > 0 && waypoints_command[waypoints_index] < 0b100) {
                         // Parse roll, pitch, yaw and throttle
                         direct_roll_control = (uint32_t)link_buffer[1] | (uint32_t)link_buffer[0] << 8;
@@ -99,6 +99,10 @@ void liberty_link_parser(void) {
                     // CCC = 010 (2) -> Auto-takeoff
                     else if (link_system_byte == 0b010)
                         link_start_and_takeoff();
+
+                    // CCC = 100 (4) -> Auto-landing
+                    else if (link_system_byte == 0b100 && start > 0)
+                        link_waypoint_step = 7;
 
                     // CCC = 110 (6) -> Land (turn off the motors)
                     else if (link_system_byte == 0b110)
