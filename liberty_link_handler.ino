@@ -255,7 +255,7 @@ void liberty_link_handler(void) {
         // ---------------------------------------------
         else if (link_waypoint_step == 7) {
             // Disable motors if current altitude stops decreasing
-            if (pid_alt_setpoint > actual_pressure + 110)
+            if (pid_alt_setpoint > actual_pressure + 150)
                 link_waypoint_step = 8;
 
             // Increase pressure (decrease altitude)

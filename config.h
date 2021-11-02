@@ -42,7 +42,7 @@ const float COMPASS_DECLINATION PROGMEM = -4.89;
 /*            Battery            */
 /*********************************/
 // At this voltage, error will be set to 1
-const float BATTERY_WARNING PROGMEM = 10.35;
+const float BATTERY_WARNING PROGMEM = 10.4;
 
 // Divider to convert raw ADC value to volts
 const float VOLTAGE_ADC_DIVIDER PROGMEM = 109.88;
@@ -54,7 +54,7 @@ const float VOLTAGE_ADC_DIVIDER PROGMEM = 109.88;
 // Disable motors spinning in flight. Useful for debug
 //#define DISABLE_MOTORS
 
-// Takeoff throttle
+// Takeoff throttle set 0 to enable auto-takeoff
 const int32_t MANUAL_TAKEOFF_THROTTLE PROGMEM = 0; //1500
 
 // Throttle in flight_mode = 1 will be passed through the exp() function to reduce the sharpness
@@ -141,8 +141,7 @@ const uint8_t GPS_SUFFIX_2 PROGMEM = 0xEF;
 const uint16_t SONARUS_TAKEOFF_INCREMENT PROGMEM = 9;
 #endif
 
-
-// Request distancee value every 20 * 4ms = 80ms
+// Request distance value every 20 * 4ms = 80ms
 const uint8_t SONARUS_REQUST_CYCLES PROGMEM = 20;
 
 // Speed of sound in m/s * 10000
