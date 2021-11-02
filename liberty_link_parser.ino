@@ -128,7 +128,7 @@ void liberty_link_parser(void) {
                     waypoints_command[link_system_data] = link_system_byte;
 
                     // Request waypoint recalculation if not in auto-landing mode
-                    if (link_waypoint_step > 3 && link_waypoint_step < 100)
+                    if (link_waypoint_step > 3 && link_waypoint_step < 7)
                         link_waypoint_step = 3;
                 }
             }
