@@ -199,8 +199,9 @@ void liberty_link_handler(void) {
                 pid_sonar_setpoint = 4000;
 
             // Set sonarus setpoint to 2 meters if waypoint command is 011 (3) or 110 (6)
+            // TODO: Change 1000 back to 2000. (the value 1000mm was set for debugging purposes)
             else if (waypoints_command[waypoints_index] == 0b011 || waypoints_command[waypoints_index] == 0b110)
-                pid_sonar_setpoint = 2000;
+                pid_sonar_setpoint = 1000;
 
             // If a descending is required
             if (pid_sonar_setpoint != 0) {
