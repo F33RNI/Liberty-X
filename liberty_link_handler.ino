@@ -95,7 +95,7 @@ void liberty_link_handler(void) {
 
                 // Start auto landing if there are no waypoints
                 else
-                    link_waypoint_step = 100;
+                    link_waypoint_step = 7;
             }
         }
 
@@ -186,7 +186,7 @@ void liberty_link_handler(void) {
 
             // Start auto landing if waypoint command is 111 (7)
             if (waypoints_command[waypoints_index] == 0b111)
-                link_waypoint_step = 100;
+                link_waypoint_step = 7;
 
             // Switch to next waypoint if waypoint command is 100 (4)
             else if (waypoints_command[waypoints_index] == 0b100 && waypoints_index < 15) {
@@ -248,6 +248,30 @@ void liberty_link_handler(void) {
                 pid_alt_setpoint += WAYPOINT_ALTITUDE_TERM;
 #endif
             }
+        }
+
+        // ---------------------------------------------
+        // Step 7. Altitude reduction for auto-landing
+        // ---------------------------------------------
+        else if (link_waypoint_step == 7) {
+            // Disable motors if current altitude stops decreasing
+            if (pid_alt_setpoint > actual_pressure + 110)
+                link_waypoint_step = 8;
+
+            // Increase pressure (decrease altitude)
+            pid_alt_setpoint += WAYPOINT_ALTITUDE_TERM;
+        }
+
+        // ---------------------------------------------
+        // Step 8. Turn off the motors
+        // ---------------------------------------------
+        else if (link_waypoint_step == 8) {
+            // Turn off the motors
+            link_check_and_turnoff_motors();
+
+            // Reset link_waypoint_step
+            if (start == 0)
+                link_waypoint_step = 0;
         }
     }
 }
