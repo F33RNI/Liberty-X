@@ -101,7 +101,7 @@ void liberty_link_parser(void) {
                         link_start_and_takeoff();
 
                     // CCC = 110 (6) -> Land (turn off the motors)
-                    else if (link_system_byte == 0b110 && link_direct_control)
+                    else if (link_system_byte == 0b110)
                         link_check_and_turnoff_motors();
 
                     // CCC = 111 (7) -> Abort (FTS)
