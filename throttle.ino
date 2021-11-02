@@ -41,7 +41,7 @@ void throttle_and_motors(void) {
 
 			if (flight_mode >= 2) {
 				// Altitude hold
-#if (defined(SONARUS) && defined(LIBERTY_LINK) && defined(SONARUS_LINK_STAB))
+#if (defined(SONARUS) && defined(LIBERTY_LINK))
 				if (link_waypoint_step == 6 && sonar_2_raw > 0 && pid_output_sonar != 0)
 					throttle = 1500 + takeoff_throttle + pid_output_sonar;
 				else
@@ -55,8 +55,8 @@ void throttle_and_motors(void) {
 				throttle = throttle_exp + takeoff_throttle;
 
 #ifdef LIBERTY_LINK
-			if (link_allowed && link_lost_counter < LINK_LOST_CYCLES && link_command == 1)
-					// Add direct throttle control if Liberty Link is working and link_command is 1 (DDC)
+			if (link_direct_control)
+					// Add direct throttle control in direct control mode
 					throttle += (direct_throttle_control - 1500);
 #endif
 		}

@@ -165,14 +165,23 @@ void receiver_start_stop(void) {
 			error = 5;
 			takeoff_throttle = 0;
 			start = 0;
+
+			// Reset liberty-link variables
+#ifdef LIBERTY_LINK
+			link_clear_disarm();
+#endif
 		}
 	}
 
-	// Stop the motors
+	// Stop the motors if the arm switch is off
 	if (channel_6 < 1500) {
-		// If the arm switch is off
 		start = 0;
 		takeoff_detected = 0;
+
+		// Reset liberty-link variables
+#ifdef LIBERTY_LINK
+		link_clear_disarm();
+#endif
 	}
 
 	if (!takeoff_detected && start == 2) {
@@ -247,10 +256,18 @@ void receiver_start_stop(void) {
 		if (error) {
 			takeoff_throttle = 0;
 			takeoff_detected = 0;
-			if (throttle > 0)
+			if (throttle > 0) {
 				throttle--;
-			else
+			}
+			else {
 				start = 0;
+
+				// Reset liberty-link variables
+#ifdef LIBERTY_LINK
+				link_clear_disarm();
+#endif
+
+			}
 		}
 
 		// Reset link step after flight

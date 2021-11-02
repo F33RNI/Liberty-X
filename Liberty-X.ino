@@ -103,7 +103,8 @@ void loop()
     // Liberty-Link
 #ifdef LIBERTY_LINK
     // Receive data and fly over GPS and altitude waypoints
-    liberty_link();
+    liberty_link_parser();
+    liberty_link_handler();
 #endif
 
     // LEDs
@@ -163,7 +164,7 @@ void loop()
     // Telemetry
 #ifdef TELEMETRY
 #ifdef LIBERTY_LINK
-    // Send telemetry if Liberty-Link not allowed, or if link_command = 8
+    // Send telemetry if link_telemetry_allowed flag is set
     if (link_telemetry_allowed) {
         for (telemetry_burst_counter = 0; telemetry_burst_counter < BURST_BYTES; telemetry_burst_counter++)
         {

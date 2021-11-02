@@ -99,7 +99,7 @@ const float PID_GPS_D PROGMEM = 12.0;
 const float PID_GPS_MAX PROGMEM = 300;
 
 
-#if (defined(SONARUS) && defined(SONARUS_LINK_STAB))
+#if (defined(SONARUS) && defined(LIBERTY_LINK))
 /*********************************/
 /*            Sonarus            */
 /*********************************/

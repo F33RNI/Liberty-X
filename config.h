@@ -171,6 +171,8 @@ const uint8_t LUX_REQUST_CYCLES PROGMEM = 25;
 #define LIBERTY_LINK
 
 #ifdef LIBERTY_LINK
+
+// ----- Communication -----
 // Unique pair of ASCII symbols
 const uint8_t LINK_SUFFIX_1 PROGMEM = 0xEE;
 const uint8_t LINK_SUFFIX_2 PROGMEM = 0xEF;
@@ -178,23 +180,9 @@ const uint8_t LINK_SUFFIX_2 PROGMEM = 0xEF;
 // If no data in 125 * 4ms = 500ms the connection will be considered lost
 const uint8_t LINK_LOST_CYCLES PROGMEM = 125;
 
+// ----- Waypoints flight section -----
 // Max GPS setpoint distance (at what maximum distance can the GPS setpoint mode and descent be immediately activated)
 const int32_t GPS_SETPOINT_MAX_DISTANCE PROGMEM = 5;
-
-// At what pressure difference (between the pressure_waypoint and actual_pressure), 
-// the variable pid_alt_setpoint will be assigned the value of the pressure_waypoint (like a GPS_SETPOINT_MAX_DISTANCE)
-const float PRESSURE_SETPOINT_ACTIVATION PROGMEM = 30;
-
-// Difference between previous and new GPS coordinates
-// If the difference is greater than the GPS_NEW_WAYPOINT_DISTANCE, a new waypoint will be set
-// Set to 0 to accept all new coordinates as new waypoints
-const int32_t GPS_NEW_WAYPOINT_DISTANCE PROGMEM = 0;
-
-// The minimum number of satellites required for Liberty-Link to work
-const uint8_t LINK_MIN_NUM_SATS PROGMEM = 5;
-
-// How many pascals to reduce the pressure (raise the altitude) when the liberty-way aborted
-const float ABORT_PRESSURE_ASCEND PROGMEM = 20;
 
 // How many pascals to reduce the pressure (raise the altitude) before GPS flight
 const float LINK_PRESSURE_ASCEND PROGMEM = 20;
@@ -208,6 +196,14 @@ const float WAYPOINT_GPS_MAX_FACTOR PROGMEM = 0.05;
 // Altitude waypoint move speed term (default = 0.022, larger = faster)
 const float WAYPOINT_ALTITUDE_TERM PROGMEM = 0.025;
 
+// ----- Pre-flight checks section -----
+// The minimum number of satellites required for takeoff
+const uint8_t LINK_MIN_NUM_SATS PROGMEM = 5;
+
+// The minimum battery voltage required for takeoff
+const float LINK_MIN_BAT_VOLTAGE PROGMEM = 11.0;
+
+// ----- Sonarus section -----
 #ifdef SONARUS
 // Allow motor shutdown only when sonar_2_raw value is greater than 0 and lower than SONARUS_LINK_MTOF
 // Comment to allow motor shutdown (with Liberty-Link command) at any height
@@ -216,15 +212,6 @@ const float WAYPOINT_ALTITUDE_TERM PROGMEM = 0.025;
 // At what distance (in mm) the motors can be turned off (default: 500)
 #ifdef SONARUS_MTOF_PROTECTION
 const uint16_t SONARUS_LINK_MTOF PROGMEM = 500;
-#endif
-
-// Decrease altitude upon reaching the setpoint not by pressure, but using sonar
-// Comment use pressure waypoint only
-#define SONARUS_LINK_STAB
-
-// How high (in mm) the drone will be above the platform in setpoit mode (default: 900)
-#ifdef SONARUS_LINK_STAB
-const float SONARUS_LINK_SETPOINT PROGMEM = 900;
 #endif
 
 #endif
