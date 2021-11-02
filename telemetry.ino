@@ -155,11 +155,11 @@ void telemetry(void) {
 		telemetry_send_byte = number_used_sats;
 
 	else if (telemetry_loop_counter == 26) {
-	// Store ground speed as it can change during the next loop
-	telemetry_buffer_bytes = ground_speed;
+		// Store ground speed as it can change during the next loop
+		telemetry_buffer_bytes = ground_speed;
 
-	// Send first 8 bytes of ground_speed variable
-	telemetry_send_byte = telemetry_buffer_bytes >> 8;
+		// Send first 8 bytes of ground_speed variable
+		telemetry_send_byte = telemetry_buffer_bytes >> 8;
 	}
 
 	// Send last 8 bytes of the ground_speed variable
@@ -168,16 +168,8 @@ void telemetry(void) {
 
 #ifdef LIBERTY_LINK
 	// Send waypoint flags and flight step for gps and altitude if Liberty-Link is enabled
-	else if (telemetry_loop_counter == 28) {
-		//if (link_new_waypoint_altitude && link_new_waypoint_gps)
-		//	telemetry_send_byte = 30 + link_waypoint_step;
-		//else if (link_new_waypoint_gps)
-		//	telemetry_send_byte = 20 + link_waypoint_step;
-		//else if (link_new_waypoint_altitude)
-		//	telemetry_send_byte = 10 + link_waypoint_step;
-		//else
-			telemetry_send_byte = link_waypoint_step;
-	}
+	else if (telemetry_loop_counter == 28)
+		telemetry_send_byte = link_waypoint_step;
 #else
 	// Send nothing if Liberty-Link is disabled
 	else if (telemetry_loop_counter == 28)
@@ -194,7 +186,6 @@ void telemetry(void) {
 	else if (telemetry_loop_counter == 29)
 		telemetry_send_byte = 0;
 #endif
-
 
 	// Send the check-byte
 	else if (telemetry_loop_counter == 30)telemetry_send_byte = telemetry_check_byte;

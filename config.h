@@ -201,6 +201,9 @@ const float WAYPOINT_GPS_MAX_FACTOR PROGMEM = 0.05;
 // Altitude waypoint move speed term (default = 0.022, larger = faster)
 const float WAYPOINT_ALTITUDE_TERM PROGMEM = 0.025;
 
+// How many pascals to reduce the pressure (raise the altitude) when the direct control aborted
+const float ABORT_PRESSURE_ASCEND PROGMEM = 20;
+
 // ----- Pre-flight checks section -----
 // The minimum number of satellites required for takeoff
 const uint8_t LINK_MIN_NUM_SATS PROGMEM = 5;

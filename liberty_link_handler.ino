@@ -224,7 +224,7 @@ void liberty_link_handler(void) {
 
                         pid_last_sonar_d_error = pid_error_temp;
 
-                        // If a difference of 20 cm is reached, current command is > 100 (4) and waypoints_index less than 15
+                        // If a difference of 20 cm is reached, current command is >= 100 (4) and waypoints_index less than 15
                         if (pid_error_temp < 200 && waypoints_command[waypoints_index] >= 0b100 && waypoints_index < 15) {
                             // Switch to next waypoint in an array
                             waypoints_index++;
@@ -338,6 +338,32 @@ void link_check_and_turnoff_motors(void) {
         link_clear_disarm();
 #endif
     }
+}
+
+/// <summary>
+/// Resets direct corrections, waypoint flags and sharply jumps up to prevent a collision
+/// </summary>
+void direct_control_abort(void) {
+    // Reset direct corrections
+    direct_roll_control = 1500;
+    direct_pitch_control = 1500;
+    direct_yaw_control = 1500;
+    direct_throttle_control = 1500;
+
+    // Fly up sharply to prevent a collision
+    pid_alt_setpoint = actual_pressure - ABORT_PRESSURE_ASCEND;
+
+    // Set current GPS position as setpoint
+    l_lat_setpoint = l_lat_gps;
+    l_lon_setpoint = l_lon_gps;
+    l_lat_waypoint = l_lat_gps;
+    l_lon_waypoint = l_lon_gps;
+
+    // Reset GPS corrections
+    l_lat_gps_float_adjust = 0;
+    l_lon_gps_float_adjust = 0;
+    waypoint_move_factor = 0;
+    pid_gps_reset();
 }
 
 /// <summary>

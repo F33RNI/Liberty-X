@@ -115,8 +115,9 @@ void liberty_link_parser(void) {
 
                 // If link_system_byte < 128 -> P=1 -> command mode
                 else {
-                    // Clear direct control flag
-                    link_direct_control = 0;
+                    // Call the anti-collision function if the direct control mode was previously used
+                    if (link_direct_control)
+                        direct_control_abort();
 
                     // Parse new waypoint latitude
                     waypoints_lat[link_system_data] = (int32_t)link_buffer[3] | (int32_t)link_buffer[2] << 8 | (int32_t)link_buffer[1] << 16 | (int32_t)link_buffer[0] << 24;
@@ -130,6 +131,9 @@ void liberty_link_parser(void) {
                     // Request waypoint recalculation if not in auto-landing mode
                     if (link_waypoint_step > 3 && link_waypoint_step < 7)
                         link_waypoint_step = 3;
+
+                    // Clear direct control flag
+                    link_direct_control = 0;
                 }
             }
         }
