@@ -33,7 +33,7 @@
  /// </summary>
 void liberty_link_handler(void) {
     // Clear direct_control flag if LibertyLink is lost
-    if (!link_allowed || link_lost_counter >= LEDS_BLINK_CYCLES)
+    if (!link_allowed || link_lost_counter >= LINK_LOST_CYCLES)
         link_direct_control = 0;
 
     if (link_allowed) {
