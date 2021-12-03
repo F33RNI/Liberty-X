@@ -128,7 +128,9 @@ void receiver_start_stop(void) {
 		// Reset GPS corrections
 		l_lat_gps_float_adjust = 0;
 		l_lon_gps_float_adjust = 0;
+#ifdef LIBERTY_LINK
 		waypoint_move_factor = 0;
+#endif
 		pid_gps_reset();
 
 		// Reset some variables

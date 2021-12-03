@@ -55,7 +55,7 @@ const float VOLTAGE_ADC_DIVIDER PROGMEM = 109.88;
 //#define DISABLE_MOTORS
 
 // Takeoff throttle set 0 to enable auto-takeoff
-const int32_t MANUAL_TAKEOFF_THROTTLE PROGMEM = 0; //1500
+const int32_t MANUAL_TAKEOFF_THROTTLE PROGMEM = 1500; //1500
 
 // Throttle in flight_mode = 1 will be passed through the exp() function to reduce the sharpness
 // Excel formula (input: column A, output: column B):
@@ -77,10 +77,10 @@ const int32_t AUTO_TAKEOFF_ACC_THRESHOLD PROGMEM = 800;
 /*            IMU            */
 /*****************************/
 // Level calibration value. Increasing causes moving to the right (>). Uncomment to overwrite the read from EEPROM
-#define ACC_CALIBRATION_ROLL	-30
+#define ACC_CALIBRATION_ROLL	-50
 
 // Level calibration value. Increasing causes moving backward (\/). Uncomment to overwrite the read from EEPROM
-#define ACC_CALIBRATION_PITCH	1070
+#define ACC_CALIBRATION_PITCH	1160
 
 // Pring level calibration values to the serial port
 #define PRINT_LEVEL_CALIBRATION
@@ -117,6 +117,10 @@ const uint8_t GPS_LOST_CYCLES PROGMEM = 100;
 // Unique pair of suffix
 const uint8_t GPS_SUFFIX_1 PROGMEM = 0xEE;
 const uint8_t GPS_SUFFIX_2 PROGMEM = 0xEF;
+
+// GPS every 5 program loops 5 x 4ms = 20ms
+// 5 - means that between every two new coordinates 4 will be simulated (overall 20ms period)
+const int16_t GPS_PREDICT_AFTER_CYCLES PROGMEM = 5;
 
 
 /********************************************/

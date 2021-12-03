@@ -120,6 +120,9 @@ boolean new_gps_data_available;
 int32_t l_lat_gps, l_lon_gps, l_lat_setpoint, l_lon_setpoint;
 float gps_pitch_adjust, gps_roll_adjust;
 float l_lon_gps_float_adjust, l_lat_gps_float_adjust, gps_man_adjust_heading;
+float lat_gps_loop_add, lon_gps_loop_add, lat_gps_add, lon_gps_add;
+int16_t gps_add_counter, gps_cycles_counter;
+int32_t lat_gps_previous, lon_gps_previous;
 
 // LED
 uint8_t leds_tick_counter;

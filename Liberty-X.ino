@@ -131,8 +131,11 @@ void loop()
     gps_read();
     // Handles new data from GPS
     gps_handler();
-    // Execute GPS PID controllers
-    pid_gps();
+    // Execute GPS PID controllers if new GPS data available
+    if (new_gps_data_available)
+        pid_gps();
+    // Clear new_gps_data_available
+    new_gps_data_available = 0;
 
     // Calculate angles with the help of acc and gyro
     calculate_angles();

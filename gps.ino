@@ -42,6 +42,10 @@ void gps_read(void) {
 	if (gps_lost_counter < UINT8_MAX)
 		gps_lost_counter++;
 
+	// Count number of cycles between each GPS measurment
+	if (gps_lost_counter < GPS_LOST_CYCLES)
+		gps_cycles_counter++;
+
 	while (GPS_SERIAL.available()) {
 		// Read current byte
 		gps_buffer[gps_buffer_position] = GPS_SERIAL.read();
@@ -84,6 +88,32 @@ void gps_read(void) {
 
 				// Set new data flag
 				new_gps_data_available = 1;
+
+				// Initilize prevoius varianbles if this is the first time the GPS code is used
+				if ((lat_gps_previous == 0 && lon_gps_previous == 0) || gps_cycles_counter == 0) {
+					lat_gps_previous = l_lat_gps;
+					lon_gps_previous = l_lon_gps;
+					lat_gps_loop_add = 0;
+					lon_gps_loop_add = 0;
+				}
+
+				// Calculate loop_add for GPS predistions
+				else {
+					lat_gps_loop_add = (float)(l_lat_gps - lat_gps_previous) / (float)gps_cycles_counter;
+					lon_gps_loop_add = (float)(l_lon_gps - lon_gps_previous) / (float)gps_cycles_counter;
+					lat_gps_loop_add *= (float)GPS_PREDICT_AFTER_CYCLES;
+					lon_gps_loop_add *= (float)GPS_PREDICT_AFTER_CYCLES;
+				}
+
+				// Start GPS predistions
+				gps_add_counter = GPS_PREDICT_AFTER_CYCLES;
+
+				// Reset cycle counter
+				gps_cycles_counter = 0;
+
+				// Remember new latitude and longitude values
+				lat_gps_previous = l_lat_gps;
+				lon_gps_previous = l_lon_gps;
 			}
 			else
 				gps_lost_counter = UINT8_MAX;
@@ -99,6 +129,41 @@ void gps_read(void) {
 		}
 	}
 
+	// GPS prediction every GPS_PREDICT_AFTER_CYCLES program loops GPS_PREDICT_AFTER_CYCLES x 4ms
+	if (gps_add_counter > 0)
+		gps_add_counter--;
+	else if (gps_lost_counter < GPS_LOST_CYCLES) {
+		// Reset loop counter
+		gps_add_counter = GPS_PREDICT_AFTER_CYCLES;
+
+		// Set new_gps_data_available flag
+		new_gps_data_available = 1;
+
+		// Add the simulated part to a buffer float variables because the l_lat_gps and l_lon_gps can only hold integers
+		lat_gps_add += lat_gps_loop_add;
+		lon_gps_add += lon_gps_loop_add;
+
+		// If the absolute value of lat_gps_add is larger then 1
+		if (abs(lat_gps_add) >= 1) {
+
+			// Increment the lat_gps_add value with the lat_gps_add value as an integer
+			l_lat_gps += (int)lat_gps_add;
+
+			// Subtract the lat_gps_add value as an integer so the decimal value remains
+			lat_gps_add -= (int)lat_gps_add;
+		}
+		
+		// If the absolute value of lon_gps_add is larger then 1
+		if (abs(lon_gps_add) >= 1) {
+
+			// Increment the lon_gps_add value with the lat_gps_add value as an integer
+			l_lon_gps += (int)lon_gps_add;
+
+			// Subtract the lon_gps_add value as an integer so the decimal value remains
+			lon_gps_add -= (int)lon_gps_add;
+		}
+	}
+
 	if (gps_lost_counter > GPS_LOST_CYCLES) {
 		// When there is no GPS information available
 		// Turn off builtin LED
@@ -109,6 +174,8 @@ void gps_read(void) {
 		l_lon_gps = 0;
 		number_used_sats = 0;
 		new_gps_data_available = 0;
+		lat_gps_previous = 0;
+		lon_gps_previous = 0;
 	}
 }
 
@@ -124,9 +191,6 @@ void gps_handler(void) {
 		else 
 			set_buildin_led(1);
 
-		// Clear new_gps_data_available flag
-		new_gps_data_available = 0;
-
 		if (flight_mode >= 3 && !gps_setpoint_set) {
 			// Remember the current location as setpoint if the flight mode is 3 (GPS hold) and no setpoints are set
 			gps_setpoint_set = 1;
@@ -137,7 +201,7 @@ void gps_handler(void) {
 
 		// If the GPS hold mode and the setpoints are stored
 		if (flight_mode >= 3 && gps_setpoint_set) {
-			if (flight_mode == 3 && takeoff_detected == 1) {
+			if (flight_mode == 3 && takeoff_detected) {
 				// GPS stick move adjustments
 				l_lat_gps_float_adjust -= 0.0015 * (((channel_2 - 1500) * cos(gps_man_adjust_heading * DEG_TO_RAD))
 					+ ((channel_1 - 1500) * cos((gps_man_adjust_heading - 90) * DEG_TO_RAD)));

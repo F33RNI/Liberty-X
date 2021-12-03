@@ -46,7 +46,7 @@ void channel_collector(void) {
     }
 
     // Mix with the GPS if setpoint is set and the flight_mode >= 3
-    if (flight_mode >= 3 && gps_setpoint_set == 1) {
+    if (flight_mode >= 3 && gps_setpoint_set) {
         pid_roll_setpoint_base = 1500 + gps_roll_adjust;
         pid_pitch_setpoint_base = 1500 + gps_pitch_adjust;
     }

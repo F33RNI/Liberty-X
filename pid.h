@@ -95,11 +95,11 @@ const float PID_ALT_MAX PROGMEM = 200;
 /*****************************/
 /*            GPS            */
 /*****************************/
-// GPS P-controller (default = 2.7)
-const float PID_GPS_P PROGMEM = 1.8;
+// GPS P-controller (default = 2.7)1.8
+const float PID_GPS_P PROGMEM = 3.2;
 
-// GPS rotating-memory D-controller (default = 6.5)
-const float PID_GPS_D PROGMEM = 12.0;
+// GPS rotating-memory D-controller (default = 6.5)12.0
+const float PID_GPS_D PROGMEM = 7.0;
 
 // Maximum output of the PID - controller (+ / -)
 const float PID_GPS_MAX PROGMEM = 300;
