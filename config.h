@@ -127,7 +127,8 @@ const int16_t GPS_PREDICT_AFTER_CYCLES PROGMEM = 5;
 /*            In-flight adjuster            */
 /********************************************/
 // You can adjust this variable with channel_8
-#define ADJUST_RULE				gimbal_pitch = channel_8
+//#define ADJUST_RULE				gimbal_pitch = channel_8
+#define ADJUST_RULE					;
 
 
 /********************************************************/
@@ -217,6 +218,10 @@ const float LINK_MIN_BAT_VOLTAGE PROGMEM = 11.0;
 
 // ----- Sonarus section -----
 #ifdef SONARUS
+
+// To what height need to descend in the mode of delivery of a parcel or optical stabilization
+const uint16_t SONARUS_DESCENT_MM PROGMEM = 1000;
+
 // Allow motor shutdown only when sonar_2_raw value is greater than 0 and lower than SONARUS_LINK_MTOF
 // Comment to allow motor shutdown (with Liberty-Link command) at any height
 #define SONARUS_MTOF_PROTECTION
@@ -225,15 +230,24 @@ const float LINK_MIN_BAT_VOLTAGE PROGMEM = 11.0;
 #ifdef SONARUS_MTOF_PROTECTION
 const uint16_t SONARUS_LINK_MTOF PROGMEM = 500;
 #endif
+#endif
+#endif
 
-#endif
-#endif
+
+/**************************************/
+/*            Auto-landing            */
+/**************************************/
+// Pressure waypoint move speed term in auto-landing mode (default = 0.022, larger = faster)
+const float AUTO_LANDING_ALTITUDE_TERM PROGMEM = 0.025;
+
+// Comment to disable auto-landing in case of low battery
+#define AUTO_LANDING_LOW_VOLTAGE
 
 
 /***********************************/
 /*            Telemetry            */
 /***********************************/
-#define TELEMETRY
+//#define TELEMETRY
 
 #ifdef TELEMETRY
 // Unique pair of ASCII symbols
@@ -248,17 +262,17 @@ const uint8_t BURST_BYTES PROGMEM = 4;
 /**********************************/
 /*            Debugger            */
 /**********************************/
-//#define DEBUGGER
+#define DEBUGGER
 
 #ifdef DEBUGGER
 // Send debug every 25 * 4ms = 100ms
 const uint16_t DEBUG_SEND_CYCLES PROGMEM = 25;
 
 // Variables to debug
-//#define DEBUG_VAR_1				sonar_1_raw
-//#define DEBUG_VAR_2				sonar_2_raw
-//#define DEBUG_VAR_3				sonar_2_prev
-//#define DEBUG_VAR_4				sonar_2_at_start
+#define DEBUG_VAR_1				link_waypoint_step
+#define DEBUG_VAR_2				waypoints_command[0]
+#define DEBUG_VAR_3				pid_sonar_setpoint
+#define DEBUG_VAR_4				waypoints_index
 #endif
 
 

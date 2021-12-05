@@ -69,55 +69,67 @@ void liberty_link_parser(void) {
                 // Parse data
                 // System byte:
                 // 8 bits: PCCC XXXX
-                // P - pointer (0 - waypoint, 1 - command)
+                // P - pointer (0 - command, 1 - waypoint)
                 // CCC - command (+ XXXX in command mode)
                 // XXXX - waypoint index (command bits in command mode)
-                link_system_byte = link_buffer[8];
-
                 // Parse XXXX (waypoint index or command data)
-                link_system_data = link_system_byte & 0b00001111;
+                link_system_data = link_buffer[8] & 0b00001111;
 
                 // Parce CCC
-                link_system_byte = (link_system_byte >> 4) & 0b00000111;
+                link_system_cmd = (link_buffer[8] >> 4) & 0b00000111;
 
-                // If link_system_byte >= 128 -> P=1 -> command mode
-                if (link_system_byte >= 0b10000000) {
+                // If link_buffer[8] <= 127 -> P=0 -> command mode
+                if (link_buffer[8] <= 0b01111111) {
 
                     // CCC = 001 (1) -> Direct control
-                    if (link_system_byte == 0b001
-                        && waypoints_command[waypoints_index] > 0 && waypoints_command[waypoints_index] < 0b100) {
-                        // Parse roll, pitch, yaw and throttle
-                        direct_roll_control = (uint32_t)link_buffer[1] | (uint32_t)link_buffer[0] << 8;
-                        direct_pitch_control = (uint32_t)link_buffer[3] | (uint32_t)link_buffer[2] << 8;
-                        direct_yaw_control = (uint32_t)link_buffer[5] | (uint32_t)link_buffer[4] << 8;
-                        direct_throttle_control = (uint32_t)link_buffer[7] | (uint32_t)link_buffer[6] << 8;
+                    if (link_system_cmd == 0b001) {
 
-                        // Set direct control flag
-                        link_direct_control = 1;
+                        // Direct control only if current waypoint command is 001 or 010 or 011
+                        // 001 - Direct control no altitude increase
+                        // 010 - Direct control 4m
+                        // 011 - Direct control 2m
+                        if (waypoints_command[waypoints_index] > 0 && waypoints_command[waypoints_index] < 0b100) {
+                            // Parse roll, pitch, yaw and throttle
+                            direct_roll_control = (uint32_t)link_buffer[1] | (uint32_t)link_buffer[0] << 8;
+                            direct_pitch_control = (uint32_t)link_buffer[3] | (uint32_t)link_buffer[2] << 8;
+                            direct_yaw_control = (uint32_t)link_buffer[5] | (uint32_t)link_buffer[4] << 8;
+                            direct_throttle_control = (uint32_t)link_buffer[7] | (uint32_t)link_buffer[6] << 8;
+
+                            // Set direct control flag
+                            link_direct_control = 1;
+                        }
                     }
 
                     // CCC = 010 (2) -> Auto-takeoff
-                    else if (link_system_byte == 0b010)
+                    else if (link_system_cmd == 0b010)
                         link_start_and_takeoff();
 
                     // CCC = 100 (4) -> Auto-landing
-                    else if (link_system_byte == 0b100 && start > 0)
-                        link_waypoint_step = 7;
+                    else if (link_system_cmd == 0b100) {
+
+                        // Switch to auto-landing only if drone is in flight
+                        if (start > 0 && !auto_landing_step)
+                            auto_landing_step = 1;
+                    }
 
                     // CCC = 110 (6) -> Land (turn off the motors)
-                    else if (link_system_byte == 0b110)
+                    else if (link_system_cmd == 0b110)
                         link_check_and_turnoff_motors();
 
                     // CCC = 111 (7) -> Abort (FTS)
-                    else if (link_system_byte == 0b111 && link_system_data == 0b1111)
+                    else if (link_system_cmd == 0b111) {
+
+                        // Data bytes must be all ones to FTS
+                        if (link_system_data == 0b1111)
                         liberty_x_fts();
+                    }
 
                     // Clear direct control flag if CCC is not 001 (1)
-                    if (link_system_byte != 0b001)
+                    if (link_system_cmd != 0b001)
                         link_direct_control = 0;
                 }
 
-                // If link_system_byte < 128 -> P=1 -> command mode
+                // If link_buffer[8] >= 128 -> P=1 -> waypoints mode
                 else {
                     // Call the anti-collision function if the direct control mode was previously used
                     if (link_direct_control)
@@ -125,14 +137,14 @@ void liberty_link_parser(void) {
 
                     // Parse new waypoint latitude
                     waypoints_lat[link_system_data] = (int32_t)link_buffer[3] | (int32_t)link_buffer[2] << 8 | (int32_t)link_buffer[1] << 16 | (int32_t)link_buffer[0] << 24;
-                    
+
                     // Parse new waypoint longitude
                     waypoints_lon[link_system_data] = (int32_t)link_buffer[7] | (int32_t)link_buffer[6] << 8 | (int32_t)link_buffer[5] << 16 | (int32_t)link_buffer[4] << 24;
                     
                     // Parse new waypoint command
-                    waypoints_command[link_system_data] = link_system_byte;
+                    waypoints_command[link_system_data] = link_system_cmd;
 
-                    // Request waypoint recalculation if not in auto-landing mode
+                    // Request waypoint recalculation if liberty-way is working and not in auto-landing mode
                     if (link_waypoint_step > 3 && link_waypoint_step < 7)
                         link_waypoint_step = 3;
 

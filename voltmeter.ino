@@ -41,6 +41,15 @@ void voltmeter(void) {
 	battery_voltage = battery_voltage * 0.92 + ((float)analogRead(4) / VOLTAGE_ADC_DIVIDER) * 0.08;
 
 	// Check voltage
-	if (battery_voltage > 6.0 && battery_voltage < BATTERY_WARNING && !error)
-		error = 1;
+	if (battery_voltage > 6.0 && battery_voltage < BATTERY_WARNING) {
+		// Set error to 1 if currently no error
+		if (!error)
+			error = 1;
+
+		// Start auto-landing sequence on low battery
+#ifdef AUTO_LANDING_LOW_VOLTAGE
+		if (!auto_landing_step && start > 0)
+			auto_landing_step = 1;
+#endif
+	}
 }

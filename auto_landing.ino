@@ -25,49 +25,46 @@
  * BY USING THE PROJECT (OR PART OF THE PROJECT / CODE) YOU AGREE TO ALL OF THE ABOVE RULES.
  */
 
-#ifdef DEBUGGER
-
 /// <summary>
-/// Prints up to four variables to the serial port
+/// Reduces the drone's altitude setpoint. As soon as the pressure stops changing, turns off the motors
+/// Set auto_landing_step to 1 to begin auto-landing sequence
 /// </summary>
-void debugger(void) {
-	// Increment counter
-	debugger_loop_counter++;
+/// <param name=""></param>
+void auto_landing(void) {
 
-	if (debugger_loop_counter >= DEBUG_SEND_CYCLES) {
-		// Reset counter
-		debugger_loop_counter = 0;
+    // Step 1. Altitude reduction for auto-landing
+	if (auto_landing_step == 1) {
+        // Turn off motors if current altitude stops decreasing
+        if (pid_alt_setpoint > actual_pressure + 150)
+            auto_landing_step = 2;
 
-#ifdef DEBUG_VAR_1
-		// First variable
-		TELEMETRY_SERIAL.print(DEBUG_VAR_1);
-		TELEMETRY_SERIAL.print('\t');
-#endif
+        // Set current flight mode to GPS or altitude stabilization
+        if (link_allowed)
+            flight_mode = 3;
+        else if (flight_mode < 2)
+            flight_mode = 2;
 
-#ifdef DEBUG_VAR_2
-		// Second variable
-		TELEMETRY_SERIAL.print(DEBUG_VAR_2);
-		TELEMETRY_SERIAL.print('\t');
-#endif
-
-#ifdef DEBUG_VAR_3
-		// Third variable
-		TELEMETRY_SERIAL.print(DEBUG_VAR_3);
-		TELEMETRY_SERIAL.print('\t');
-#endif
-
-#ifdef DEBUG_VAR_4
-		// Fourth variable
-		TELEMETRY_SERIAL.print(DEBUG_VAR_4);
-		TELEMETRY_SERIAL.print('\t');
-#endif
-
-#if defined(DEBUG_VAR_1) || defined(DEBUG_VAR_2) || defined(DEBUG_VAR_3) || defined(DEBUG_VAR_4)
-		// New line
-		TELEMETRY_SERIAL.println();
-#endif
+        // Increase pressure (decrease altitude)
+        pid_alt_setpoint += AUTO_LANDING_ALTITUDE_TERM;
 	}
-}
 
+    // Step 2. Turn off the motors
+    else if (auto_landing_step == 2) {
+        // Set current flight mode to GPS or altitude stabilization
+        if (link_allowed)
+            flight_mode = 3;
+        else if (flight_mode < 2)
+            flight_mode = 2;
+
+        // Turn off the motors and clear variables
+        start = 0;
+        takeoff_detected = 0;
+#ifdef LIBERTY_LINK
+        link_clear_disarm();
 #endif
 
+        // Reset auto_landing_step
+        if (start == 0)
+            auto_landing_step = 0;
+    }
+}

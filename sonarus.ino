@@ -122,4 +122,38 @@ void sonarus(void) {
 		sonar_2_raw = HWire.read() << 8 | HWire.read();
 	}
 }
+
+/// <summary>
+/// Executes 2nd sonar PID controller
+/// </summary>
+/// <param name=""></param>
+void sonarus_pid(void) {
+	// Disable pressure control
+	pid_alt_setpoint = actual_pressure;
+
+	// Execute Sonarus PID controller only if sonarus_cycle_counter is 1
+	if (sonarus_cycle_counter == 1) {
+		pid_error_temp = pid_sonar_setpoint - (float)sonar_2_raw;
+
+		pid_i_mem_sonar += PID_SONARUS_I * pid_error_temp;
+		if (pid_i_mem_sonar > PID_SONARUS_MAX)pid_i_mem_sonar = PID_SONARUS_MAX;
+		else if (pid_i_mem_sonar < PID_SONARUS_MAX * -1)pid_i_mem_sonar = PID_SONARUS_MAX * -1;
+
+		pid_output_sonar = PID_SONARUS_P * pid_error_temp + pid_i_mem_sonar + PID_SONARUS_D * (pid_error_temp - pid_last_sonar_d_error);
+		if (pid_output_sonar > PID_SONARUS_MAX)pid_output_sonar = PID_SONARUS_MAX;
+		else if (pid_output_sonar < PID_SONARUS_MAX * -1)pid_output_sonar = PID_SONARUS_MAX * -1;
+
+		pid_last_sonar_d_error = pid_error_temp;
+
+		// If a difference of 20 cm is reached, current command is >= 100 (4) and waypoints_index less than 15
+		if (pid_error_temp < 200 && waypoints_command[waypoints_index] >= 0b100 && waypoints_index < 15) {
+			// Switch to next waypoint in an array
+			waypoints_index++;
+
+			// Incrememnt altitude
+			link_waypoint_step = 2;
+		}
+
+	}
+}
 #endif

@@ -144,10 +144,11 @@ uint32_t gimbal_pitch;
 #ifdef LIBERTY_LINK
 boolean link_allowed, link_telemetry_allowed, link_direct_control;
 int16_t direct_roll_control = 1500, direct_pitch_control = 1500, direct_yaw_control = 1500, direct_throttle_control = 1500;
-uint8_t link_system_byte, link_system_data, link_waypoint_step;
+uint8_t link_system_cmd, link_system_data, link_waypoint_step;
 uint8_t link_buffer[12], link_buffer_counter, link_byte_previous;
 uint8_t link_check_byte, link_temp_byte;
 uint8_t link_lost_counter = UINT8_MAX;
+uint16_t link_waypoint_loop_counter;
 
 int32_t waypoints_lat[16], waypoints_lon[16];
 uint8_t waypoints_command[16];
@@ -172,8 +173,10 @@ uint16_t sonar_2_at_start, sonar_2_prev;
 #ifdef LIBERTY_LINK
 float pid_i_mem_sonar, pid_sonar_setpoint, pid_last_sonar_d_error, pid_output_sonar;
 #endif
-
 #endif
+
+// Auto-landing
+uint8_t auto_landing_step;
 
 // Lux meter
 #ifdef LUX_METER
@@ -187,6 +190,5 @@ uint8_t lux_sqrt_data;
 #ifdef DEBUGGER
 uint16_t debugger_loop_counter;
 #endif
-
 #endif
 

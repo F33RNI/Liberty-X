@@ -73,7 +73,7 @@ void timers_setup(void) {
 	pinMode(PB8, PWM);
 	pinMode(PB9, PWM);
 
-	// Gimbal
+	// Gimbal or latch mechanism
 	TIMER3_BASE->CR1 = TIMER_CR1_CEN | TIMER_CR1_ARPE;
 	TIMER3_BASE->CR2 = 0;
 	TIMER3_BASE->SMCR = 0;
@@ -84,6 +84,6 @@ void timers_setup(void) {
 	TIMER3_BASE->PSC = 71;
 	TIMER3_BASE->ARR = 5000;
 	TIMER3_BASE->DCR = 0;
-	TIMER3_BASE->CCR4 = 1000;
+	TIMER3_BASE->CCR4 = 2000;
 	pinMode(PB1, PWM);
 }

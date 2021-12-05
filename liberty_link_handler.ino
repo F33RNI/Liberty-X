@@ -36,7 +36,11 @@ void liberty_link_handler(void) {
     if (!link_allowed || link_lost_counter >= LINK_LOST_CYCLES)
         link_direct_control = 0;
 
-    if (link_allowed) {
+    if (link_allowed && !auto_landing_step) {
+        // Increment loop counter (timer)
+        if (link_waypoint_loop_counter < UINT16_MAX)
+            link_waypoint_loop_counter++;
+
         // Default flight mode for all Liberty Way sequences
         flight_mode = 3;
 
@@ -58,11 +62,11 @@ void liberty_link_handler(void) {
         // ---------------------------------------------
         else if (link_waypoint_step == 2) {
             // Go to step 3 as soon as the waypoint is reached
-            if (pid_alt_setpoint < ground_pressure - LINK_PRESSURE_ASCEND)
+            if (pid_alt_setpoint <= ground_pressure - LINK_PRESSURE_ASCEND && actual_pressure <= pid_alt_setpoint + 10)
                 link_waypoint_step = 3;
 
             // Decrease pressure (increase altitude) until waypoint is reached
-            else
+            else if (pid_alt_setpoint >= ground_pressure - LINK_PRESSURE_ASCEND)
                 pid_alt_setpoint -= WAYPOINT_ALTITUDE_TERM;
         }
 
@@ -72,9 +76,17 @@ void liberty_link_handler(void) {
         else if (link_waypoint_step == 3) {
             // Check if the waypoint is available
             if (waypoints_command[waypoints_index] > 0) {
+                // Set the current setpoint as a waypoint if current command is 0b001 (1)
+                if (waypoints_command[waypoints_index] == 0b001) {
+                    l_lat_waypoint = l_lat_setpoint;
+                    l_lon_waypoint = l_lon_setpoint;
+                }
+
                 // Select waypoint from array of waypoints
-                l_lat_waypoint = waypoints_lat[waypoints_index];
-                l_lon_waypoint = waypoints_lon[waypoints_index];
+                else {
+                    l_lat_waypoint = waypoints_lat[waypoints_index];
+                    l_lon_waypoint = waypoints_lon[waypoints_index];
+                }
 
                 // If the drone is nearby to the waypoint, go to the GPS setpoint
                 if (abs(l_lat_setpoint - l_lat_waypoint) < GPS_SETPOINT_MAX_DISTANCE
@@ -86,15 +98,18 @@ void liberty_link_handler(void) {
                     link_waypoint_step = 4;
             }
 
-            // Switch to next point or start automatic landing if waypoint is not available
+            // If waypoint is not available
             else {
                 // Incrememnt the waypoint index counter until the entire array has been scanned
                 if (waypoints_index < 15)
                     waypoints_index++;
 
-                // Start auto landing if there are no waypoints
-                else
-                    link_waypoint_step = 7;
+                // Set the current setpoint as a waypoint if there are no more points available
+                else {
+                    l_lat_waypoint = l_lat_setpoint;
+                    l_lon_waypoint = l_lon_setpoint;
+                }
+
             }
         }
 
@@ -183,95 +198,89 @@ void liberty_link_handler(void) {
             // Reset setpoint of sonarus
             pid_sonar_setpoint = 0;
 
-            // Start auto landing if waypoint command is 111 (7)
-            if (waypoints_command[waypoints_index] == 0b111)
-                link_waypoint_step = 7;
-
-            // Switch to next waypoint if waypoint command is 100 (4)
-            else if (waypoints_command[waypoints_index] == 0b100 && waypoints_index < 15) {
-                waypoints_index++;
-                link_waypoint_step = 3;
+            // Start auto-landing sequence if waypoint command is 111 (7)
+            if (waypoints_command[waypoints_index] == 0b111) {
+                if (!auto_landing_step)
+                    auto_landing_step = 1;
             }
 
-            // Set sonarus setpoint to 4 meters if waypoint command is 010 (2) or 101 (5)
-            else if (waypoints_command[waypoints_index] == 0b010 || waypoints_command[waypoints_index] == 0b101)
-                pid_sonar_setpoint = 4000;
+            // Switch to next waypoint if waypoint command is 100 (4)
+            else if (waypoints_command[waypoints_index] == 0b100) {
+                if (waypoints_index < 15) {
+                    // Increment waypoint
+                    waypoints_index++;
 
-            // Set sonarus setpoint to 2 meters if waypoint command is 011 (3) or 110 (6)
-            // TODO: Change 1000 back to 2000. (the value 1000mm was set for debugging purposes)
-            else if (waypoints_command[waypoints_index] == 0b011 || waypoints_command[waypoints_index] == 0b110)
-                pid_sonar_setpoint = 900;
-
-            // If a descending is required
-            if (pid_sonar_setpoint != 0) {
-#ifdef SONARUS
-                // If sonarus if working and the current height is not higher than half a meter above the setpoint
-                if (sonar_2_raw > 0 && (float)sonar_2_raw - pid_sonar_setpoint < 500) {
-                    // Disable pressure control
-                    pid_alt_setpoint = actual_pressure;
-
-                    // Execute Sonarus PID controller
-                    if (sonarus_cycle_counter == 1) {
-                        pid_error_temp = pid_sonar_setpoint - (float)sonar_2_raw;
-
-                        pid_i_mem_sonar += PID_SONARUS_I * pid_error_temp;
-                        if (pid_i_mem_sonar > PID_SONARUS_MAX)pid_i_mem_sonar = PID_SONARUS_MAX;
-                        else if (pid_i_mem_sonar < PID_SONARUS_MAX * -1)pid_i_mem_sonar = PID_SONARUS_MAX * -1;
-
-                        pid_output_sonar = PID_SONARUS_P * pid_error_temp + pid_i_mem_sonar + PID_SONARUS_D * (pid_error_temp - pid_last_sonar_d_error);
-                        if (pid_output_sonar > PID_SONARUS_MAX)pid_output_sonar = PID_SONARUS_MAX;
-                        else if (pid_output_sonar < PID_SONARUS_MAX * -1)pid_output_sonar = PID_SONARUS_MAX * -1;
-
-                        pid_last_sonar_d_error = pid_error_temp;
-
-                        // If a difference of 20 cm is reached, current command is >= 100 (4) and waypoints_index less than 15
-                        if (pid_error_temp < 200 && waypoints_command[waypoints_index] >= 0b100 && waypoints_index < 15) {
-                            // Switch to next waypoint in an array
-                            waypoints_index++;
-
-                            // Incrememnt altitude
-                            link_waypoint_step = 2;
-                        }
-
-                    }
+                    // Go to waypoint calculation
+                    link_waypoint_step = 3;
                 }
+            }
 
-                // Increase pressure (decrease altitude) and reset sonarus PID if sonarus cannot see the ground
-                else {
-                    pid_alt_setpoint += WAYPOINT_ALTITUDE_TERM;
-                    pid_output_sonar = 0;
-                    pid_i_mem_sonar = 0;
-                    pid_last_sonar_d_error = 0;
-                }
-#else
-                // Increase pressure (decrease altitude) if there is no sonarus module
-                pid_alt_setpoint += WAYPOINT_ALTITUDE_TERM;
-#endif
+            // Switch to parsel drop if waypoint command is 110 (6)
+            else if (waypoints_command[waypoints_index] == 0b110) {
+                link_waypoint_step = 7;
+            }
+
+            // Set sonarus setpoint to SONARUS_DESCENT_MM if waypoint command is 011 (3) or 110 (5)
+            else if (waypoints_command[waypoints_index] == 0b011 || waypoints_command[waypoints_index] == 0b101) {
+                link_waypoint_step = 7;
             }
         }
 
         // ---------------------------------------------
-        // Step 7. Altitude reduction for auto-landing
+        // Step 7. Decrease the altitude
         // ---------------------------------------------
         else if (link_waypoint_step == 7) {
-            // Disable motors if current altitude stops decreasing
-            if (pid_alt_setpoint > actual_pressure + 150)
+            // Switch to sonarus stabilization if the required height is reached
+            if (sonar_2_raw > 0 && sonar_2_raw <= SONARUS_DESCENT_MM) {
                 link_waypoint_step = 8;
+                link_waypoint_loop_counter = 0;
+            }
 
             // Increase pressure (decrease altitude)
             pid_alt_setpoint += WAYPOINT_ALTITUDE_TERM;
         }
 
         // ---------------------------------------------
-        // Step 8. Turn off the motors
+        // Step 8. Sonarus stabilization
         // ---------------------------------------------
         else if (link_waypoint_step == 8) {
-            // Turn off the motors
-            link_check_and_turnoff_motors();
+            // Switch to dropping the parcel and next waypoint if not in direct control
+            // and after waiting 1000 * 4ms = 4s to stabilize
+            if (waypoints_command[waypoints_index] >= 0b100 && link_waypoint_loop_counter >= 1000) {
+                link_waypoint_step = 9;
+                link_waypoint_loop_counter = 0;
 
-            // Reset link_waypoint_step
-            if (start == 0)
-                link_waypoint_step = 0;
+                // Drop the parsel if current command is 0b110 (6)
+                if (waypoints_command[waypoints_index] == 0b110)
+                    gimbal_pitch = 1000;
+            }
+
+            // Execute 2nd sonar PID controller
+            pid_sonar_setpoint = SONARUS_DESCENT_MM;
+            sonarus_pid();
+        }
+
+        // ---------------------------------------------
+        // Step 9. Waiting for a parcel to be dropped
+        // ---------------------------------------------
+        else if (link_waypoint_step == 9) {
+            // Switch to altitude incresing after waiting 500 * 4ms = 2s
+            if (link_waypoint_loop_counter >= 500) {
+                // Incrememnt waypoint index
+                if (waypoints_index < 15)
+                    waypoints_index++;
+
+                // Switch to altitude incresing
+                link_waypoint_step = 2;
+
+                // Reset dropping servo if current command is 0b110 (6)
+                if (waypoints_command[waypoints_index] == 0b110)
+                    gimbal_pitch = 2000;
+            }
+
+            // Execute 2nd sonar PID controller
+            pid_sonar_setpoint = SONARUS_DESCENT_MM;
+            sonarus_pid();
         }
     }
 }
@@ -301,13 +310,6 @@ void link_start_and_takeoff(void) {
 /// when the motors are turning off
 /// </summary>
 void link_clear_disarm(void) {
-    // Clear arrays of waypoints
-    for (count_var = 0; count_var < 16; count_var++) {
-        waypoints_lat[count_var] = 0;
-        waypoints_lon[count_var] = 0;
-        waypoints_command[count_var] = 0;
-    }
-
     // Clear waypoint step
     link_waypoint_step = 0;
 

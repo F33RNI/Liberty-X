@@ -94,6 +94,11 @@ void setup()
     // Set the initial compass heading
     angle_yaw = actual_compass_heading;
 
+    // Set default servo position
+#ifdef LIBERTY_LINK
+    gimbal_pitch = 2000;
+#endif
+
     // Reset loop timer
     loop_timer = micros();
 }
@@ -112,6 +117,9 @@ void loop()
     liberty_link_parser();
     liberty_link_handler();
 #endif
+
+    // Auto-landing sequence loop
+    auto_landing();
 
     // LEDs
     leds_handler();

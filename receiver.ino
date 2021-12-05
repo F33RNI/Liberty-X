@@ -89,9 +89,9 @@ void receiver_modes(void) {
 		link_allowed = 0;
 #else
 	// Enable heading lock if channel_7 > 1500
-	if (channel_7 > 1500)
-		heading_lock_enabled = 1;
-	else
+	//if (channel_7 > 1500)
+	//	heading_lock_enabled = 1;
+	//else
 		heading_lock_enabled = 0;
 #endif
 
@@ -296,12 +296,20 @@ void ppm_decoder(void) {
 	if (measured_time > 3000)channel_select_counter = 0;
 	else channel_select_counter++;
 
-	if (channel_select_counter == 1)channel_1 = measured_time;
-	if (channel_select_counter == 2)channel_2 = measured_time;
-	if (channel_select_counter == 3)channel_3 = measured_time;
-	if (channel_select_counter == 4)channel_4 = measured_time;
-	if (channel_select_counter == 5)channel_5 = measured_time;
-	if (channel_select_counter == 6)channel_6 = measured_time;
-	if (channel_select_counter == 7)channel_7 = measured_time;
-	if (channel_select_counter == 8)channel_8 = measured_time;
+	if (channel_select_counter == 1)
+		channel_1 = measured_time;
+	else if (channel_select_counter == 2)
+		channel_2 = measured_time;
+	else if (channel_select_counter == 3)
+		channel_3 = measured_time;
+	else if (channel_select_counter == 4)
+		channel_4 = measured_time;
+	else if (channel_select_counter == 5)
+		channel_5 = measured_time;
+	else if (channel_select_counter == 6)
+		channel_6 = measured_time;
+	else if (channel_select_counter == 7)
+		channel_7 = measured_time;
+	else if (channel_select_counter == 8)
+		channel_8 = measured_time;
 }
