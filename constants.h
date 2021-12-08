@@ -44,11 +44,36 @@ const uint8_t SONARUS_ADDRESS PROGMEM = 0xEE;
 #endif
 const uint8_t VOLTMETER_PIN PROGMEM = 4;
 
+// Liberty-Way steps
+#ifdef LIBERTY_LINK
+#define LINK_STEP_IDLE			0
+#define LINK_STEP_TAKEOFF		1
+#define LINK_STEP_ASCENT		2
+#define LINK_STEP_WAYP_CALC		3
+#define LINK_STEP_GPS_WAYP		4
+#define LINK_STEP_GPS_SETP		5
+#define LINK_STEP_DESCENT		6
+#define LINK_STEP_SONARUS		7
+#define LINK_STEP_AFTER_SONARUS	8
 
-// GPS UBLOX predefined messages for setup
-const uint8_t GPS_DISABLE_GPGSV[11] PROGMEM = { 0xB5, 0x62, 0x06, 0x01, 0x03, 0x00, 0xF0, 0x03, 0x00, 0xFD, 0x15 };
-const uint8_t GPS_SET_TO_5HZ[14] PROGMEM = { 0xB5, 0x62, 0x06, 0x08, 0x06, 0x00, 0xC8, 0x00, 0x01, 0x00, 0x01, 0x00, 0xDE, 0x6A };
-const uint8_t GPS_SET_TO_57KBPS[28] PROGMEM = { 0xB5, 0x62, 0x06, 0x00, 0x14, 0x00, 0x01, 0x00, 0x00, 0x00, 0xD0, 0x08, 0x00, 0x00, 
-0x00, 0xE1, 0x00, 0x00, 0x07, 0x00, 0x07, 0x00, 0x00, 0x00, 0x00, 0x00, 0xE2, 0xE1 };
+// Liberty-Link waypoint commands (bits)
+#define WAYP_CMD_BITS_SKIP				0b000
+#define WAYP_CMD_BITS_DDC_NO_GPS_NO_DSC	0b001
+#define WAYP_CMD_BITS_DDC_NO_DSC		0b010
+#define WAYP_CMD_BITS_DDC				0b011
+#define WAYP_CMD_BITS_FLY				0b100
+#define WAYP_CMD_BITS_DESCEND			0b101
+#define WAYP_CMD_BITS_PARCEL			0b110
+#define WAYP_CMD_BITS_LAND				0b111
+
+// Liberty-Link commands (bits)
+#define CMD_BITS_IDLE				0b000
+#define CMD_BITS_DDC				0b001
+#define CMD_BITS_AUTO_TAKEOFF		0b010
+#define CMD_BITS_AUTO_LAND			0b100
+#define CMD_BITS_DDC_LAND			0b110
+#define CMD_BITS_FTS				0b111
+
+#endif
 
 #endif

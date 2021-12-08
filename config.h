@@ -220,7 +220,7 @@ const float LINK_MIN_BAT_VOLTAGE PROGMEM = 11.0;
 #ifdef SONARUS
 
 // To what height need to descend in the mode of delivery of a parcel or optical stabilization
-const uint16_t SONARUS_DESCENT_MM PROGMEM = 1000;
+const uint16_t SONARUS_DESCENT_MM PROGMEM = 700;
 
 // Allow motor shutdown only when sonar_2_raw value is greater than 0 and lower than SONARUS_LINK_MTOF
 // Comment to allow motor shutdown (with Liberty-Link command) at any height
@@ -247,7 +247,7 @@ const float AUTO_LANDING_ALTITUDE_TERM PROGMEM = 0.025;
 /***********************************/
 /*            Telemetry            */
 /***********************************/
-//#define TELEMETRY
+#define TELEMETRY
 
 #ifdef TELEMETRY
 // Unique pair of ASCII symbols
@@ -262,7 +262,7 @@ const uint8_t BURST_BYTES PROGMEM = 4;
 /**********************************/
 /*            Debugger            */
 /**********************************/
-#define DEBUGGER
+//#define DEBUGGER
 
 #ifdef DEBUGGER
 // Send debug every 25 * 4ms = 100ms
@@ -297,8 +297,6 @@ const uint32_t TELEMETRY_BAUDRATE PROGMEM = 115200;
 #define COLOR_ERROR				255, 110, 0
 #define COLOR_FRONT				0, 255, 0
 #define COLOR_REAR				255, 0, 0
-#define COLOR_FRONT_LINK		0, 127, 127
-#define COLOR_REAR_LINK			127, 127, 0
 #define COLOR_BLINK				255, 255, 255
 
 // Change state every 63 * 4ms ~ 250ms for error signal

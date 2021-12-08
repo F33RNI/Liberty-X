@@ -120,6 +120,11 @@ void sonarus(void) {
 
 		// Read distance from second sonar
 		sonar_2_raw = HWire.read() << 8 | HWire.read();
+
+		// Convert 2 distance to cm/2
+		sonar_2_compressed = sonar_2_raw / 20;
+		if (sonar_2_compressed > 255)
+			sonar_2_compressed = 255;
 	}
 }
 
@@ -145,14 +150,14 @@ void sonarus_pid(void) {
 
 		pid_last_sonar_d_error = pid_error_temp;
 
-		// If a difference of 20 cm is reached, current command is >= 100 (4) and waypoints_index less than 15
+		/*// If a difference of 20 cm is reached, current command is >= 100 (4) and waypoints_index less than 15
 		if (pid_error_temp < 200 && waypoints_command[waypoints_index] >= 0b100 && waypoints_index < 15) {
 			// Switch to next waypoint in an array
 			waypoints_index++;
 
 			// Incrememnt altitude
 			link_waypoint_step = 2;
-		}
+		}*/
 
 	}
 }

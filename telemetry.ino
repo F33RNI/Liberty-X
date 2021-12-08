@@ -78,7 +78,7 @@ void telemetry(void) {
 		if (start == 2) {
 			// Send the altitude only when the quadcopter is flying
 			// Calculate the altitude and add 1000 to prevent negative numbers
-			telemetry_buffer_bytes = 1000 + ((ground_pressure - actual_pressure) * 0.0842);
+			telemetry_buffer_bytes = 1000 + ((ground_pressure - actual_pressure) * 0.0842f);
 		}
 		else {
 			// Send and altitude of 0 meters if the quadcopter isn't flying
@@ -167,36 +167,61 @@ void telemetry(void) {
 		telemetry_send_byte = telemetry_buffer_bytes;
 
 #ifdef LIBERTY_LINK
-	// Send waypoint flags and flight step for gps and altitude if Liberty-Link is enabled
-	else if (telemetry_loop_counter == 28)
-		telemetry_send_byte = link_waypoint_step;
+	// Send waypoints flight step if Liberty-Link is enabled
+	else if (telemetry_loop_counter == 28) {
+		if (!auto_landing_step)
+			telemetry_send_byte = link_waypoint_step;
+		else
+			telemetry_send_byte = (uint8_t)128 + auto_landing_step;
+	}
+
+	// Send waypoint index if Liberty-Link is enabled
+	else if (telemetry_loop_counter == 29)
+		telemetry_send_byte = waypoints_index;
 #else
 	// Send nothing if Liberty-Link is disabled
-	else if (telemetry_loop_counter == 28)
-		telemetry_send_byte = 0;
-#endif
-
-#ifdef LUX_METER
-	// Send ambient illumination
-	else if (telemetry_loop_counter == 29) {
-		telemetry_send_byte = lux_sqrt_data + 1;
+	else if (telemetry_loop_counter == 28) {
+		if (!auto_landing_step)
+			telemetry_send_byte = 0;
+		else
+			telemetry_send_byte = (uint8_t)128 + auto_landing_step;
 	}
-#else
-	// Send nothing if lux meter is disabled
 	else if (telemetry_loop_counter == 29)
 		telemetry_send_byte = 0;
 #endif
 
+#ifdef SONARUS
+	// Send sonarus distance
+	else if (telemetry_loop_counter == 30)
+		telemetry_send_byte = sonar_2_compressed;
+#else
+	// Send nothing if Sonarus is disabled
+	else if (telemetry_loop_counter == 30)
+		telemetry_send_byte = 0;
+#endif // SONARUS
+
+
+#ifdef LUX_METER
+	// Send ambient illumination
+	else if (telemetry_loop_counter == 31) {
+		telemetry_send_byte = lux_sqrt_data + 1;
+	}
+#else
+	// Send nothing if lux meter is disabled
+	else if (telemetry_loop_counter == 31)
+		telemetry_send_byte = 0;
+#endif
+
 	// Send the check-byte
-	else if (telemetry_loop_counter == 30)telemetry_send_byte = telemetry_check_byte;
+	else if (telemetry_loop_counter == 32)telemetry_send_byte = telemetry_check_byte;
 
 	// Send the first suffix
-	else if (telemetry_loop_counter == 31)telemetry_send_byte = TELEMETRY_SUFFIX_1;
+	else if (telemetry_loop_counter == 33)telemetry_send_byte = TELEMETRY_SUFFIX_1;
 
 	// Send the second suffix
-	else if (telemetry_loop_counter == 32)telemetry_send_byte = TELEMETRY_SUFFIX_2;
+	else if (telemetry_loop_counter == 34)telemetry_send_byte = TELEMETRY_SUFFIX_2;
 
-	if (telemetry_loop_counter > 0 && telemetry_loop_counter <= 32) {
+	if (telemetry_loop_counter > 0 && telemetry_loop_counter <= 34) {
 		// XOR every send_byte
 		telemetry_check_byte ^= telemetry_send_byte;
 

@@ -151,7 +151,7 @@ uint8_t link_lost_counter = UINT8_MAX;
 uint16_t link_waypoint_loop_counter;
 
 int32_t waypoints_lat[16], waypoints_lon[16];
-uint8_t waypoints_command[16];
+uint8_t waypoints_command[16], waypoint_command;
 uint8_t waypoints_index;
 int32_t l_lat_waypoint, l_lon_waypoint, l_lat_waypoint_last, l_lon_waypoint_last;
 float waypoint_lat_factor, waypoint_lon_factor, waypoint_move_factor;
@@ -166,7 +166,7 @@ uint32_t telemetry_buffer_bytes;
 // Sonars
 #ifdef SONARUS
 uint8_t sonarus_cycle_counter;
-uint16_t sonar_1_raw, sonar_2_raw;
+uint16_t sonar_1_raw, sonar_2_raw, sonar_2_compressed;
 #ifdef SONARUS_TAKEOFF_DETECTION
 uint16_t sonar_2_at_start, sonar_2_prev;
 #endif

@@ -81,14 +81,11 @@ void liberty_link_parser(void) {
                 // If link_buffer[8] <= 127 -> P=0 -> command mode
                 if (link_buffer[8] <= 0b01111111) {
 
-                    // CCC = 001 (1) -> Direct control
-                    if (link_system_cmd == 0b001) {
+                    // CCC = DDC (1) -> Direct control
+                    if (link_system_cmd == CMD_BITS_DDC) {
 
-                        // Direct control only if current waypoint command is 001 or 010 or 011
-                        // 001 - Direct control no altitude increase
-                        // 010 - Direct control 4m
-                        // 011 - Direct control 2m
-                        if (waypoints_command[waypoints_index] > 0 && waypoints_command[waypoints_index] < 0b100) {
+                        // Direct control
+                        if (waypoints_command[waypoints_index] > 0 && waypoints_command[waypoints_index] < WAYP_CMD_BITS_FLY) {
                             // Parse roll, pitch, yaw and throttle
                             direct_roll_control = (uint32_t)link_buffer[1] | (uint32_t)link_buffer[0] << 8;
                             direct_pitch_control = (uint32_t)link_buffer[3] | (uint32_t)link_buffer[2] << 8;
@@ -100,32 +97,35 @@ void liberty_link_parser(void) {
                         }
                     }
 
-                    // CCC = 010 (2) -> Auto-takeoff
-                    else if (link_system_cmd == 0b010)
+                    // CCC = AUTO_TAKEOFF (2) -> Auto-takeoff
+                    else if (link_system_cmd == CMD_BITS_AUTO_TAKEOFF)
                         link_start_and_takeoff();
 
-                    // CCC = 100 (4) -> Auto-landing
-                    else if (link_system_cmd == 0b100) {
+                    // CCC = AUTO_LAND (4) -> Auto-landing
+                    else if (link_system_cmd == CMD_BITS_AUTO_LAND) {
 
                         // Switch to auto-landing only if drone is in flight
                         if (start > 0 && !auto_landing_step)
                             auto_landing_step = 1;
                     }
 
-                    // CCC = 110 (6) -> Land (turn off the motors)
-                    else if (link_system_cmd == 0b110)
-                        link_check_and_turnoff_motors();
+                    // CCC = DDC_LAND (6) -> Land (turn off the motors)
+                    else if (link_system_cmd == CMD_BITS_DDC_LAND) {
+                        // Turn off motors only in DDC mode
+                        if (link_direct_control)
+                            link_check_and_turnoff_motors();
+                    }
 
-                    // CCC = 111 (7) -> Abort (FTS)
-                    else if (link_system_cmd == 0b111) {
+                    // CCC = FTS (7) -> Abort (FTS)
+                    else if (link_system_cmd == CMD_BITS_FTS) {
 
                         // Data bytes must be all ones to FTS
                         if (link_system_data == 0b1111)
-                        liberty_x_fts();
+                            liberty_x_fts();
                     }
 
-                    // Clear direct control flag if CCC is not 001 (1)
-                    if (link_system_cmd != 0b001)
+                    // Clear direct control flag if CCC is not BITS_DDC or BITS_DDC_LAND
+                    if (link_system_cmd != CMD_BITS_DDC && link_system_cmd != CMD_BITS_DDC_LAND)
                         link_direct_control = 0;
                 }
 
@@ -144,9 +144,11 @@ void liberty_link_parser(void) {
                     // Parse new waypoint command
                     waypoints_command[link_system_data] = link_system_cmd;
 
-                    // Request waypoint recalculation if liberty-way is working and not in auto-landing mode
-                    if (link_waypoint_step > 3 && link_waypoint_step < 7)
-                        link_waypoint_step = 3;
+                    // Request waypoint recalculation if liberty-way is working and not in auto-landing mode and waypoint has changed
+                    if (!auto_landing_step && link_waypoint_step > LINK_STEP_WAYP_CALC && link_waypoint_step < LINK_STEP_DESCENT
+                        && (l_lat_waypoint != waypoints_lat[waypoints_index] || l_lon_waypoint != waypoints_lon[waypoints_index] 
+                            || waypoint_command != waypoints_command[waypoints_index]))
+                        link_waypoint_step = LINK_STEP_WAYP_CALC;
 
                     // Clear direct control flag
                     link_direct_control = 0;

@@ -189,7 +189,7 @@ void loop()
             telemetry();
 
             // Immediately reset the counter if in liberty-link mode
-            if (telemetry_loop_counter >= 32) {
+            if (telemetry_loop_counter >= 34) {
                 telemetry_loop_counter = 0;
                 break;
             }

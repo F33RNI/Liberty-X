@@ -98,22 +98,8 @@ void leds_in_flight_signal(void) {
 /// </summary>
 void leds_static_signal(void) {
 	// Static colors
-#ifdef LIBERTY_LINK
-	if (link_lost_counter < LINK_LOST_CYCLES && link_allowed) {
-		// Show link colors if the Liberty-Link is on and not in IDLE mode
-		ws_leds.setPixelColor(1, COLOR_FRONT_LINK);
-		ws_leds.setPixelColor(2, COLOR_REAR_LINK);
-	}
-	else {
-		// Show default colors if the Liberty-Link is off
-		ws_leds.setPixelColor(1, COLOR_FRONT);
-		ws_leds.setPixelColor(2, COLOR_REAR);
-	}
-#else
-	// Show default colors if the Liberty-Link is disabled
 	ws_leds.setPixelColor(1, COLOR_FRONT);
 	ws_leds.setPixelColor(2, COLOR_REAR);
-#endif
 }
 
 /// <summary>

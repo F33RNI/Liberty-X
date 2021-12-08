@@ -35,7 +35,7 @@ void auto_landing(void) {
     // Step 1. Altitude reduction for auto-landing
 	if (auto_landing_step == 1) {
         // Turn off motors if current altitude stops decreasing
-        if (pid_alt_setpoint > actual_pressure + 150)
+        if (pid_alt_setpoint > actual_pressure + 100)
             auto_landing_step = 2;
 
         // Set current flight mode to GPS or altitude stabilization

@@ -25,6 +25,8 @@
  * BY USING THE PROJECT (OR PART OF THE PROJECT / CODE) YOU AGREE TO ALL OF THE ABOVE RULES.
  */
 
+// TODO: ADD AUTO-HEADING DURING WAYPOINTS FLY
+
 #ifdef LIBERTY_LINK
 
  /// <summary>
@@ -49,21 +51,21 @@ void liberty_link_handler(void) {
             flight_mode = 1;
 
         // ---------------------------------------------
-        // Step 1. Waiting for takeoff
+        // Step TAKEOFF. Waiting for takeoff
         // ---------------------------------------------
-        if (link_waypoint_step == 1) {
-            // Go to step 2 if takeoff detected
+        if (link_waypoint_step == LINK_STEP_TAKEOFF) {
+            // Go to ascending if takeoff detected
             if (takeoff_detected)
-                link_waypoint_step = 2;
+                link_waypoint_step = LINK_STEP_ASCENT;
         }
 
         // ---------------------------------------------
-        // Step 2. Reduse the pressure setpoint to increase the altitude
+        // Step ASCENT. Reduse the pressure setpoint to increase the altitude
         // ---------------------------------------------
-        else if (link_waypoint_step == 2) {
-            // Go to step 3 as soon as the waypoint is reached
+        else if (link_waypoint_step == LINK_STEP_ASCENT) {
+            // Go to step WAYP_CALC as soon as the pressure waypoint is reached
             if (pid_alt_setpoint <= ground_pressure - LINK_PRESSURE_ASCEND && actual_pressure <= pid_alt_setpoint + 10)
-                link_waypoint_step = 3;
+                link_waypoint_step = LINK_STEP_WAYP_CALC;
 
             // Decrease pressure (increase altitude) until waypoint is reached
             else if (pid_alt_setpoint >= ground_pressure - LINK_PRESSURE_ASCEND)
@@ -71,13 +73,16 @@ void liberty_link_handler(void) {
         }
 
         // ---------------------------------------------
-        // Step 3. Calculate next waypoint
+        // Step WAYP_CALC. Calculate next waypoint
         // ---------------------------------------------
-        else if (link_waypoint_step == 3) {
+        else if (link_waypoint_step == LINK_STEP_WAYP_CALC) {
+            // Store current waypoint command
+            waypoint_command = waypoints_command[waypoints_index];
+
             // Check if the waypoint is available
-            if (waypoints_command[waypoints_index] > 0) {
-                // Set the current setpoint as a waypoint if current command is 0b001 (1)
-                if (waypoints_command[waypoints_index] == 0b001) {
+            if (waypoint_command > 0) {
+                // Set the current setpoint as a waypoint if current command is DDC without GPS and descending
+                if (waypoint_command == WAYP_CMD_BITS_DDC_NO_GPS_NO_DSC) {
                     l_lat_waypoint = l_lat_setpoint;
                     l_lon_waypoint = l_lon_setpoint;
                 }
@@ -91,11 +96,52 @@ void liberty_link_handler(void) {
                 // If the drone is nearby to the waypoint, go to the GPS setpoint
                 if (abs(l_lat_setpoint - l_lat_waypoint) < GPS_SETPOINT_MAX_DISTANCE
                     && abs(l_lon_setpoint - l_lon_waypoint) < GPS_SETPOINT_MAX_DISTANCE)
-                    link_waypoint_step = 6;
+                    link_waypoint_step = LINK_STEP_GPS_SETP;
 
-                // Go to step 4 if the drone if far from the waypoint
-                else
-                    link_waypoint_step = 4;
+                // Calculate the distance and factors to the GPS waypoint
+                else {
+                    // If the drone is nearby to the waypoint, go to the GPS setpoint
+                    if (abs(l_lat_setpoint - l_lat_waypoint) < GPS_SETPOINT_MAX_DISTANCE
+                        && abs(l_lon_setpoint - l_lon_waypoint) < GPS_SETPOINT_MAX_DISTANCE)
+                        link_waypoint_step = LINK_STEP_GPS_SETP;
+
+                    // If the drone if far from the waypoint
+                    else {
+                        // Reset latitude float adjustments if direction has changed
+                        if ((l_lat_waypoint > l_lat_setpoint && l_lat_waypoint_last < l_lat_setpoint) ||
+                            (l_lat_waypoint < l_lat_setpoint && l_lat_waypoint_last > l_lat_setpoint))
+                            l_lat_gps_float_adjust = 0;
+
+                        // Reset latitude float adjustments if direction has changed
+                        if ((l_lon_waypoint > l_lon_setpoint && l_lon_waypoint_last < l_lon_setpoint) ||
+                            (l_lon_waypoint < l_lat_setpoint && l_lon_waypoint_last > l_lon_setpoint))
+                            l_lon_gps_float_adjust = 0;
+
+                        // Recalculate factors if waypoint has changed
+                        if (l_lat_waypoint != l_lat_waypoint_last || l_lon_waypoint != l_lon_waypoint_last) {
+                            // Reset factors because they need to be recalculated
+                            waypoint_lat_factor = 0;
+                            waypoint_lon_factor = 0;
+
+                            // Calculate factors
+                            if (abs(l_lat_waypoint - l_lat_setpoint) >= abs(l_lon_waypoint - l_lon_setpoint)) {
+                                waypoint_lon_factor = (float)abs(l_lon_waypoint - l_lon_setpoint) / (float)abs(l_lat_waypoint - l_lat_setpoint);
+                                waypoint_lat_factor = 1;
+                            }
+                            else {
+                                waypoint_lon_factor = 1;
+                                waypoint_lat_factor = (float)abs(l_lat_waypoint - l_lat_setpoint) / (float)abs(l_lon_waypoint - l_lon_setpoint);
+                            }
+                        }
+
+                        // Go to GPS waypoint flight
+                        link_waypoint_step = LINK_STEP_GPS_WAYP;
+
+                        // Store new waypoints
+                        l_lat_waypoint_last = l_lat_waypoint;
+                        l_lon_waypoint_last = l_lon_waypoint;
+                    }
+                }
             }
 
             // If waypoint is not available
@@ -114,60 +160,13 @@ void liberty_link_handler(void) {
         }
 
         // ---------------------------------------------
-        // Step 4. Calculate the distance and factors to the GPS waypoint
+        // Step GPS_WAYP. GPS waypoint flight
         // ---------------------------------------------
-        else if (link_waypoint_step == 4) {
+        else if (link_waypoint_step == LINK_STEP_GPS_WAYP) {
             // If the drone is nearby to the waypoint, go to the GPS setpoint
             if (abs(l_lat_setpoint - l_lat_waypoint) < GPS_SETPOINT_MAX_DISTANCE
                 && abs(l_lon_setpoint - l_lon_waypoint) < GPS_SETPOINT_MAX_DISTANCE)
-                link_waypoint_step = 6;
-
-            // If the drone if far from the waypoint
-            else {
-                // Reset latitude float adjustments if direction has changed
-                if ((l_lat_waypoint > l_lat_setpoint && l_lat_waypoint_last < l_lat_setpoint) ||
-                    (l_lat_waypoint < l_lat_setpoint && l_lat_waypoint_last > l_lat_setpoint))
-                    l_lat_gps_float_adjust = 0;
-
-                // Reset latitude float adjustments if direction has changed
-                if ((l_lon_waypoint > l_lon_setpoint && l_lon_waypoint_last < l_lon_setpoint) ||
-                    (l_lon_waypoint < l_lat_setpoint && l_lon_waypoint_last > l_lon_setpoint))
-                    l_lon_gps_float_adjust = 0;
-
-                // Recalculate factors if waypoint has changed
-                if (l_lat_waypoint != l_lat_waypoint_last || l_lon_waypoint != l_lon_waypoint_last) {
-                    // Reset factors because they need to be recalculated
-                    waypoint_lat_factor = 0;
-                    waypoint_lon_factor = 0;
-
-                    // Calculate factors
-                    if (abs(l_lat_waypoint - l_lat_setpoint) >= abs(l_lon_waypoint - l_lon_setpoint)) {
-                        waypoint_lon_factor = (float)abs(l_lon_waypoint - l_lon_setpoint) / (float)abs(l_lat_waypoint - l_lat_setpoint);
-                        waypoint_lat_factor = 1;
-                    }
-                    else {
-                        waypoint_lon_factor = 1;
-                        waypoint_lat_factor = (float)abs(l_lat_waypoint - l_lat_setpoint) / (float)abs(l_lon_waypoint - l_lon_setpoint);
-                    }
-                }
-
-                // Go to GPS waypoint flight
-                link_waypoint_step = 5;
-
-                // Store new waypoints
-                l_lat_waypoint_last = l_lat_waypoint;
-                l_lon_waypoint_last = l_lon_waypoint;
-            }
-        }
-
-        // ---------------------------------------------
-        // Step 5. GPS waypoint flight
-        // ---------------------------------------------
-        else if (link_waypoint_step == 5) {
-            // If the drone is nearby to the waypoint, go to the GPS setpoint
-            if (abs(l_lat_setpoint - l_lat_waypoint) < GPS_SETPOINT_MAX_DISTANCE
-                && abs(l_lon_setpoint - l_lon_waypoint) < GPS_SETPOINT_MAX_DISTANCE)
-                link_waypoint_step = 6;
+                link_waypoint_step = LINK_STEP_GPS_SETP;
 
             // Calculate speed factor
             if (abs(l_lat_waypoint - l_lat_setpoint) < 160 && abs(l_lon_waypoint - l_lon_setpoint) < 160
@@ -188,9 +187,9 @@ void liberty_link_handler(void) {
         }
 
         // ---------------------------------------------
-        // Step 6. GPS setpoint aka GPS direct control
+        // Step GPS_SETP. GPS setpoint aka GPS direct control
         // ---------------------------------------------
-        else if (link_waypoint_step == 6) {
+        else if (link_waypoint_step == LINK_STEP_GPS_SETP) {
             // Set GPS setpoint
             l_lat_setpoint = l_lat_waypoint;
             l_lon_setpoint = l_lon_waypoint;
@@ -198,60 +197,61 @@ void liberty_link_handler(void) {
             // Reset setpoint of sonarus
             pid_sonar_setpoint = 0;
 
-            // Start auto-landing sequence if waypoint command is 111 (7)
-            if (waypoints_command[waypoints_index] == 0b111) {
+            // Start auto-landing sequence if waypoint command is landinf
+            if (waypoint_command == WAYP_CMD_BITS_LAND) {
                 if (!auto_landing_step)
                     auto_landing_step = 1;
             }
 
-            // Switch to next waypoint if waypoint command is 100 (4)
-            else if (waypoints_command[waypoints_index] == 0b100) {
+            // Switch to next waypoint if waypoint command is just fly
+            else if (waypoint_command == WAYP_CMD_BITS_FLY) {
                 if (waypoints_index < 15) {
                     // Increment waypoint
                     waypoints_index++;
 
                     // Go to waypoint calculation
-                    link_waypoint_step = 3;
+                    link_waypoint_step = LINK_STEP_WAYP_CALC;
                 }
             }
 
-            // Switch to parsel drop if waypoint command is 110 (6)
-            else if (waypoints_command[waypoints_index] == 0b110) {
-                link_waypoint_step = 7;
+            // Switch to parsel drop if waypoint command is drop a parcel
+            else if (waypoint_command == WAYP_CMD_BITS_PARCEL) {
+                link_waypoint_step = LINK_STEP_DESCENT;
             }
 
-            // Set sonarus setpoint to SONARUS_DESCENT_MM if waypoint command is 011 (3) or 110 (5)
-            else if (waypoints_command[waypoints_index] == 0b011 || waypoints_command[waypoints_index] == 0b101) {
-                link_waypoint_step = 7;
+            // Set sonarus setpoint to SONARUS_DESCENT_MM if waypoint command is descending
+            else if (waypoint_command == WAYP_CMD_BITS_DDC || waypoint_command == WAYP_CMD_BITS_DESCEND) {
+                link_waypoint_step = LINK_STEP_DESCENT;
             }
         }
 
         // ---------------------------------------------
-        // Step 7. Decrease the altitude
+        // Step DESCENT. Decrease the altitude
         // ---------------------------------------------
-        else if (link_waypoint_step == 7) {
+        else if (link_waypoint_step == LINK_STEP_DESCENT) {
             // Switch to sonarus stabilization if the required height is reached
             if (sonar_2_raw > 0 && sonar_2_raw <= SONARUS_DESCENT_MM) {
-                link_waypoint_step = 8;
+                link_waypoint_step = LINK_STEP_SONARUS;
                 link_waypoint_loop_counter = 0;
             }
 
             // Increase pressure (decrease altitude)
-            pid_alt_setpoint += WAYPOINT_ALTITUDE_TERM;
+            else
+                pid_alt_setpoint += WAYPOINT_ALTITUDE_TERM;
         }
 
         // ---------------------------------------------
-        // Step 8. Sonarus stabilization
+        // Step SONARUS. Sonarus stabilization
         // ---------------------------------------------
-        else if (link_waypoint_step == 8) {
+        else if (link_waypoint_step == LINK_STEP_SONARUS) {
             // Switch to dropping the parcel and next waypoint if not in direct control
             // and after waiting 1000 * 4ms = 4s to stabilize
-            if (waypoints_command[waypoints_index] >= 0b100 && link_waypoint_loop_counter >= 1000) {
-                link_waypoint_step = 9;
+            if (waypoint_command >= WAYP_CMD_BITS_FLY && link_waypoint_loop_counter >= 1000) {
+                link_waypoint_step = LINK_STEP_AFTER_SONARUS;
                 link_waypoint_loop_counter = 0;
 
-                // Drop the parsel if current command is 0b110 (6)
-                if (waypoints_command[waypoints_index] == 0b110)
+                // Drop the parsel if current command is BITS_PARCEL
+                if (waypoint_command == WAYP_CMD_BITS_PARCEL)
                     gimbal_pitch = 1000;
             }
 
@@ -261,20 +261,23 @@ void liberty_link_handler(void) {
         }
 
         // ---------------------------------------------
-        // Step 9. Waiting for a parcel to be dropped
+        // Step AFTER_SONARUS. Waiting for a parcel to be dropped
         // ---------------------------------------------
-        else if (link_waypoint_step == 9) {
+        else if (link_waypoint_step == LINK_STEP_AFTER_SONARUS) {
             // Switch to altitude incresing after waiting 500 * 4ms = 2s
             if (link_waypoint_loop_counter >= 500) {
                 // Incrememnt waypoint index
                 if (waypoints_index < 15)
                     waypoints_index++;
 
-                // Switch to altitude incresing
-                link_waypoint_step = 2;
+                // Store new ground pressure
+                ground_pressure = actual_pressure + (float)SONARUS_DESCENT_MM / 84.2f;
 
-                // Reset dropping servo if current command is 0b110 (6)
-                if (waypoints_command[waypoints_index] == 0b110)
+                // Switch to altitude incresing
+                link_waypoint_step = LINK_STEP_ASCENT;
+
+                // Reset dropping servo if current command is BITS_PARCEL
+                if (waypoint_command == WAYP_CMD_BITS_PARCEL)
                     gimbal_pitch = 2000;
             }
 
@@ -290,15 +293,15 @@ void liberty_link_handler(void) {
 /// </summary>
 void link_start_and_takeoff(void) {
     // Perform pre-flight checks
-    if (start < 1 && channel_3 > 1050 && channel_6 > 1500
-        && number_used_sats >= LINK_MIN_NUM_SATS && battery_voltage >= LINK_MIN_BAT_VOLTAGE) {
+    if (!takeoff_detected && start < 1 && channel_3 > 1050 && channel_6 > 1500
+        && number_used_sats >= LINK_MIN_NUM_SATS && (battery_voltage >= LINK_MIN_BAT_VOLTAGE || battery_voltage < 6.f)) {
 
         // Remember ground pressure
         ground_pressure = actual_pressure;
         start = 1;
 
         // Start Liberty-Way sequence
-        link_waypoint_step = 1;
+        link_waypoint_step = LINK_STEP_TAKEOFF;
 
         // Start from beggining of the waypoints array
         waypoints_index = 0;
@@ -311,7 +314,7 @@ void link_start_and_takeoff(void) {
 /// </summary>
 void link_clear_disarm(void) {
     // Clear waypoint step
-    link_waypoint_step = 0;
+    link_waypoint_step = LINK_STEP_IDLE;
 
     // Clear direct control flag
     link_direct_control = 0;
