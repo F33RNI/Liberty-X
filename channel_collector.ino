@@ -62,13 +62,14 @@ void channel_collector(void) {
         pid_pitch_setpoint_base += direct_pitch_control - 1500;
         pid_yaw_setpoint_base += direct_yaw_control - 1500;
     }
-
-    // Add waypoint yaw correction
-    if (link_allowed && !auto_landing_step && 
-        (link_waypoint_step == LINK_STEP_GPS_WAYP
-            || link_waypoint_step == LINK_STEP_GPS_SETP 
-            || link_waypoint_step == LINK_STEP_DESCENT))
-        pid_yaw_setpoint_base += waypoint_yaw_correction;
+    else {
+        // Add waypoint yaw correction
+        if (link_allowed && !auto_landing_step &&
+            (link_waypoint_step == LINK_STEP_GPS_WAYP
+                || link_waypoint_step == LINK_STEP_GPS_SETP
+                || link_waypoint_step == LINK_STEP_DESCENT))
+            pid_yaw_setpoint_base += waypoint_yaw_correction;
+    }
 #endif
 
 #ifdef SONARUS

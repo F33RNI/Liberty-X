@@ -280,7 +280,10 @@ void liberty_link_handler(void) {
                     waypoints_index++;
 
                 // Store new ground pressure
-                ground_pressure = actual_pressure + (float)SONARUS_DESCENT_MM / 84.2f;
+                if (sonar_2_raw > 0)
+                    ground_pressure = actual_pressure + (float)sonar_2_raw / 84.2f;
+                else
+                    ground_pressure = actual_pressure + (float)SONARUS_DESCENT_MM / 84.2f;
 
                 // Switch to altitude incresing
                 link_waypoint_step = LINK_STEP_ASCENT;
