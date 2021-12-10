@@ -122,4 +122,14 @@ const float PID_SONARUS_D PROGMEM = 0.58;
 const float PID_SONARUS_MAX PROGMEM = 100;
 #endif
 
+
+#ifdef LIBERTY_LINK
+/*************************************************/
+/*            Waypoint yaw correction            */
+/*************************************************/
+// Only P correction (default = 4)
+const float WAYP_YAW_CORRECTION_TERM PROGMEM = 4.f;
+
+#endif
+
 #endif

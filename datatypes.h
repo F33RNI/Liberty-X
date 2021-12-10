@@ -155,6 +155,8 @@ uint8_t waypoints_command[16], waypoint_command;
 uint8_t waypoints_index;
 int32_t l_lat_waypoint, l_lon_waypoint, l_lat_waypoint_last, l_lon_waypoint_last;
 float waypoint_lat_factor, waypoint_lon_factor, waypoint_move_factor;
+float waypoint_course;
+int16_t waypoint_yaw_correction;
 #endif
 
 // Telemetry

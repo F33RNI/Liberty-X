@@ -50,6 +50,12 @@ void liberty_link_handler(void) {
         if (link_direct_control)
             flight_mode = 1;
 
+        // Course P controller
+        if (angle_yaw > 180)
+            waypoint_yaw_correction = (waypoint_course - (angle_yaw - 360.f)) * WAYP_YAW_CORRECTION_TERM;
+        else
+            waypoint_yaw_correction = (waypoint_course - angle_yaw) * WAYP_YAW_CORRECTION_TERM;
+
         // ---------------------------------------------
         // Step TAKEOFF. Waiting for takeoff
         // ---------------------------------------------
@@ -92,6 +98,9 @@ void liberty_link_handler(void) {
                     l_lat_waypoint = waypoints_lat[waypoints_index];
                     l_lon_waypoint = waypoints_lon[waypoints_index];
                 }
+
+                // Calculate course
+                waypoint_course = atan2(l_lon_waypoint - l_lon_setpoint, l_lat_waypoint - l_lat_setpoint) * RAD_TO_DEG;
 
                 // If the drone is nearby to the waypoint, go to the GPS setpoint
                 if (abs(l_lat_setpoint - l_lat_waypoint) < GPS_SETPOINT_MAX_DISTANCE
