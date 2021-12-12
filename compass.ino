@@ -131,12 +131,12 @@ void compass_calibrate(void) {
 
 	// Print old values to the serial port if needed
 #ifdef PRINT_COMPASS_CALIBRATION
-	TELEMETRY_SERIAL.println(F("Calibrating compass..."));
-	TELEMETRY_SERIAL.println(F("Old values:"));
+	DEBUG_SERIAL.println(F("Calibrating compass..."));
+	DEBUG_SERIAL.println(F("Old values:"));
 	for (count_var = 0; count_var < 6; count_var++) {
-		TELEMETRY_SERIAL.print(count_var);
-		TELEMETRY_SERIAL.print('\t');
-		TELEMETRY_SERIAL.println(compass_cal_values[count_var]);
+		DEBUG_SERIAL.print(count_var);
+		DEBUG_SERIAL.print('\t');
+		DEBUG_SERIAL.println(compass_cal_values[count_var]);
 	}
 #endif
 
@@ -179,12 +179,12 @@ void compass_calibrate(void) {
 
 	// Print new values to the serial port if needed
 #ifdef PRINT_COMPASS_CALIBRATION
-	TELEMETRY_SERIAL.println(F("Calibration done"));
-	TELEMETRY_SERIAL.println(F("New values:"));
+	DEBUG_SERIAL.println(F("Calibration done"));
+	DEBUG_SERIAL.println(F("New values:"));
 	for (count_var = 0; count_var < 6; count_var++) {
-		TELEMETRY_SERIAL.print(count_var);
-		TELEMETRY_SERIAL.print('\t');
-		TELEMETRY_SERIAL.println(compass_cal_values[count_var]);
+		DEBUG_SERIAL.print(count_var);
+		DEBUG_SERIAL.print('\t');
+		DEBUG_SERIAL.println(compass_cal_values[count_var]);
 	}
 #endif
 

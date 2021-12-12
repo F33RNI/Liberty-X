@@ -130,6 +130,9 @@ const float PID_SONARUS_MAX PROGMEM = 100;
 // Only P correction (default = 4)
 const float WAYP_YAW_CORRECTION_TERM PROGMEM = 4.f;
 
+// Max P correction (default = 150)
+const float WAYP_YAW_CORRECTION_MAX PROGMEM = 100.f;
+
 #endif
 
 #endif

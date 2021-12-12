@@ -115,8 +115,6 @@ void gps_read(void) {
 				lat_gps_previous = l_lat_gps;
 				lon_gps_previous = l_lon_gps;
 			}
-			else
-				gps_lost_counter = UINT8_MAX;
 		}
 		else {
 			// Store data bytes
@@ -170,8 +168,8 @@ void gps_read(void) {
 		set_buildin_led(0);
 
 		// Reset some variables
-		l_lat_gps = 0;
-		l_lon_gps = 0;
+		//l_lat_gps = 0;
+		//l_lon_gps = 0;
 		number_used_sats = 0;
 		new_gps_data_available = 0;
 		lat_gps_previous = 0;
@@ -188,8 +186,14 @@ void gps_handler(void) {
 		// Change the LED on the STM32 to indicate GPS reception
 		if (number_used_sats < 8)
 			set_buildin_led(!buildin_led_state);
-		else 
+		else
 			set_buildin_led(1);
+
+		// Zero setpoint prevention
+		if (l_lat_setpoint == 0 && l_lon_setpoint == 0) {
+			l_lat_setpoint = l_lat_gps;
+			l_lon_setpoint = l_lon_gps;
+		}
 
 		if (flight_mode >= 3 && !gps_setpoint_set) {
 			// Remember the current location as setpoint if the flight mode is 3 (GPS hold) and no setpoints are set
@@ -248,8 +252,8 @@ void gps_handler(void) {
 	if (flight_mode < 3 && gps_setpoint_set > 0) {
 		// Reset variables to disable the correction if the GPS hold mode is disabled and the setpoints are set
 		gps_setpoint_set = 0;
-		l_lat_setpoint = 0;
-		l_lon_setpoint = 0;
+		l_lat_setpoint = l_lat_gps;
+		l_lon_setpoint = l_lon_gps;
 
 		pid_gps_reset();
 	}

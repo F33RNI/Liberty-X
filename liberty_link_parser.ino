@@ -85,7 +85,7 @@ void liberty_link_parser(void) {
                     if (link_system_cmd == CMD_BITS_DDC) {
 
                         // Direct control
-                        if (waypoints_command[waypoints_index] > 0 && waypoints_command[waypoints_index] < WAYP_CMD_BITS_FLY) {
+                        if (waypoints_command[waypoints_index] > WAYP_CMD_BITS_SKIP && waypoints_command[waypoints_index] < WAYP_CMD_BITS_FLY) {
                             // Parse roll, pitch, yaw and throttle
                             direct_roll_control = (uint32_t)link_buffer[1] | (uint32_t)link_buffer[0] << 8;
                             direct_pitch_control = (uint32_t)link_buffer[3] | (uint32_t)link_buffer[2] << 8;

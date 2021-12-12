@@ -48,8 +48,13 @@ void voltmeter(void) {
 
 		// Start auto-landing sequence on low battery
 #ifdef AUTO_LANDING_LOW_VOLTAGE
-		if (!auto_landing_step && start > 0)
+		if (!auto_landing_step && start > 0) {
+			l_lat_setpoint = l_lat_gps;
+			l_lon_setpoint = l_lon_gps;
+			l_lat_waypoint = l_lat_gps;
+			l_lon_waypoint = l_lon_gps;
 			auto_landing_step = 1;
+		}
 #endif
 	}
 }

@@ -40,31 +40,31 @@ void debugger(void) {
 
 #ifdef DEBUG_VAR_1
 		// First variable
-		TELEMETRY_SERIAL.print(DEBUG_VAR_1);
-		TELEMETRY_SERIAL.print('\t');
+		DEBUG_SERIAL.print(DEBUG_VAR_1);
+		DEBUG_SERIAL.print('\t');
 #endif
 
 #ifdef DEBUG_VAR_2
 		// Second variable
-		TELEMETRY_SERIAL.print(DEBUG_VAR_2);
-		TELEMETRY_SERIAL.print('\t');
+		DEBUG_SERIAL.print(DEBUG_VAR_2);
+		DEBUG_SERIAL.print('\t');
 #endif
 
 #ifdef DEBUG_VAR_3
 		// Third variable
-		TELEMETRY_SERIAL.print(DEBUG_VAR_3);
-		TELEMETRY_SERIAL.print('\t');
+		DEBUG_SERIAL.print(DEBUG_VAR_3);
+		DEBUG_SERIAL.print('\t');
 #endif
 
 #ifdef DEBUG_VAR_4
 		// Fourth variable
-		TELEMETRY_SERIAL.print(DEBUG_VAR_4);
-		TELEMETRY_SERIAL.print('\t');
+		DEBUG_SERIAL.print(DEBUG_VAR_4);
+		DEBUG_SERIAL.print('\t');
 #endif
 
 #if defined(DEBUG_VAR_1) || defined(DEBUG_VAR_2) || defined(DEBUG_VAR_3) || defined(DEBUG_VAR_4)
 		// New line
-		TELEMETRY_SERIAL.println();
+		DEBUG_SERIAL.println();
 #endif
 	}
 }

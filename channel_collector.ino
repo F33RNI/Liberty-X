@@ -58,9 +58,11 @@ void channel_collector(void) {
 #ifdef LIBERTY_LINK
     if (link_direct_control) {
         // Add direct roll/pitch/yaw control if direct control mode is enabled
-        pid_roll_setpoint_base += direct_roll_control - 1500;
-        pid_pitch_setpoint_base += direct_pitch_control - 1500;
-        pid_yaw_setpoint_base += direct_yaw_control - 1500;
+        if (link_allowed) {
+            pid_roll_setpoint_base += direct_roll_control - 1500;
+            pid_pitch_setpoint_base += direct_pitch_control - 1500;
+            pid_yaw_setpoint_base += direct_yaw_control - 1500;
+        }
     }
     else {
         // Add waypoint yaw correction

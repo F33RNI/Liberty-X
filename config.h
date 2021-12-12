@@ -55,7 +55,7 @@ const float VOLTAGE_ADC_DIVIDER PROGMEM = 109.88;
 //#define DISABLE_MOTORS
 
 // Takeoff throttle set 0 to enable auto-takeoff
-const int32_t MANUAL_TAKEOFF_THROTTLE PROGMEM = 1500; //1500
+const int32_t MANUAL_TAKEOFF_THROTTLE PROGMEM = 1510; //1500
 
 // Throttle in flight_mode = 1 will be passed through the exp() function to reduce the sharpness
 // Excel formula (input: column A, output: column B):
@@ -77,10 +77,10 @@ const int32_t AUTO_TAKEOFF_ACC_THRESHOLD PROGMEM = 800;
 /*            IMU            */
 /*****************************/
 // Level calibration value. Increasing causes moving to the right (>). Uncomment to overwrite the read from EEPROM
-#define ACC_CALIBRATION_ROLL	-50
+#define ACC_CALIBRATION_ROLL	-70
 
 // Level calibration value. Increasing causes moving backward (\/). Uncomment to overwrite the read from EEPROM
-#define ACC_CALIBRATION_PITCH	1160
+#define ACC_CALIBRATION_PITCH	1100
 
 // Pring level calibration values to the serial port
 #define PRINT_LEVEL_CALIBRATION
@@ -108,9 +108,6 @@ const uint16_t PRESSURE_STAB_N PROGMEM = 1000;
 /*****************************/
 /*            GPS            */
 /*****************************/
-// Baud rate of GPS mixer serial port
-const uint32_t GPS_BAUD_RATE = 115200;
-
 // If no data in 100 * 4ms = 400ms the gps will be considered lost
 const uint8_t GPS_LOST_CYCLES PROGMEM = 100;
 
@@ -159,7 +156,7 @@ const uint16_t SONARUS_SPRING_START PROGMEM = 1000;
 const uint16_t SONARUS_SPRING_STOP PROGMEM = 100;
 
 // Maximum backward pitch value (1500 + SONARUS_MAX_PITCH)
-const uint16_t SONARUS_MAX_PITCH PROGMEM = 200;
+const uint16_t SONARUS_MAX_PITCH PROGMEM = 0;
 #endif
 
 
@@ -207,14 +204,7 @@ const float WAYPOINT_GPS_MAX_FACTOR PROGMEM = 0.05;
 const float WAYPOINT_ALTITUDE_TERM PROGMEM = 0.025;
 
 // How many pascals to reduce the pressure (raise the altitude) when the direct control aborted
-const float ABORT_PRESSURE_ASCEND PROGMEM = 20;
-
-// ----- Pre-flight checks section -----
-// The minimum number of satellites required for takeoff
-const uint8_t LINK_MIN_NUM_SATS PROGMEM = 5;
-
-// The minimum battery voltage required for takeoff
-const float LINK_MIN_BAT_VOLTAGE PROGMEM = 11.0;
+const float ABORT_PRESSURE_ASCEND PROGMEM = 5;
 
 // ----- Sonarus section -----
 #ifdef SONARUS
@@ -269,10 +259,10 @@ const uint8_t BURST_BYTES PROGMEM = 4;
 const uint16_t DEBUG_SEND_CYCLES PROGMEM = 25;
 
 // Variables to debug
-#define DEBUG_VAR_1				link_waypoint_step
-#define DEBUG_VAR_2				waypoints_command[0]
-#define DEBUG_VAR_3				pid_sonar_setpoint
-#define DEBUG_VAR_4				waypoints_index
+#define DEBUG_VAR_1				waypoint_course
+#define DEBUG_VAR_2				angle_yaw
+#define DEBUG_VAR_3				waypoint_yaw_correction
+//#define DEBUG_VAR_4				gps_pitch_adjust
 #endif
 
 
@@ -285,8 +275,17 @@ const uint16_t DEBUG_SEND_CYCLES PROGMEM = 25;
 // GPS port
 #define GPS_SERIAL				Serial2
 
-// Telemetry, Liberty-Link and Debugger port baud rate
+// DEBUG port
+#define DEBUG_SERIAL				Serial2
+
+// Telemetry and Liberty-Link port baud rate
 const uint32_t TELEMETRY_BAUDRATE PROGMEM = 115200;
+
+// Baud rate of GPS mixer serial port
+const uint32_t GPS_BAUD_RATE PROGMEM = 115200;
+
+// Debugger port baud rate
+const uint32_t DEBUGGER_BAUDRATE PROGMEM = 115200;
 
 
 /*************************************/

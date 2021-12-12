@@ -48,7 +48,7 @@ void throttle_and_motors(void) {
 			if (flight_mode >= 2) {
 				// Altitude hold
 #if (defined(SONARUS) && defined(LIBERTY_LINK))
-				if (link_waypoint_step == 6 && sonar_2_raw > 0 && pid_output_sonar != 0)
+				if (link_allowed && (link_waypoint_step == LINK_STEP_SONARUS || link_waypoint_step == LINK_STEP_AFTER_SONARUS) && sonar_2_raw > 0)
 					throttle = 1500 + takeoff_throttle + pid_output_sonar;
 				else
 					throttle = 1500 + takeoff_throttle + pid_output_alt;

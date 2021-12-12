@@ -149,16 +149,6 @@ void sonarus_pid(void) {
 		else if (pid_output_sonar < PID_SONARUS_MAX * -1)pid_output_sonar = PID_SONARUS_MAX * -1;
 
 		pid_last_sonar_d_error = pid_error_temp;
-
-		/*// If a difference of 20 cm is reached, current command is >= 100 (4) and waypoints_index less than 15
-		if (pid_error_temp < 200 && waypoints_command[waypoints_index] >= 0b100 && waypoints_index < 15) {
-			// Switch to next waypoint in an array
-			waypoints_index++;
-
-			// Incrememnt altitude
-			link_waypoint_step = 2;
-		}*/
-
 	}
 }
 #endif

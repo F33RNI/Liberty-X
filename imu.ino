@@ -131,7 +131,7 @@ void imu_calibrate_gyro(void) {
 
 	// Print to the serial port if needed
 #ifdef PRINT_GYRO_CALIBRATION
-	TELEMETRY_SERIAL.println(F("Calibrating gyro..."));
+	DEBUG_SERIAL.println(F("Calibrating gyro..."));
 #endif
 
 	// Reset gyro calibration values
@@ -161,14 +161,14 @@ void imu_calibrate_gyro(void) {
 
 	// Print to the serial port if needed
 #ifdef PRINT_GYRO_CALIBRATION
-	TELEMETRY_SERIAL.println(F("Calibration done"));
-	TELEMETRY_SERIAL.println(F("New values:"));
-	TELEMETRY_SERIAL.print(F("Roll: "));
-	TELEMETRY_SERIAL.println(gyro_roll_cal);
-	TELEMETRY_SERIAL.print(F("Pitch: "));
-	TELEMETRY_SERIAL.println(gyro_pitch_cal);
-	TELEMETRY_SERIAL.print(F("Yaw: "));
-	TELEMETRY_SERIAL.println(gyro_yaw_cal);
+	DEBUG_SERIAL.println(F("Calibration done"));
+	DEBUG_SERIAL.println(F("New values:"));
+	DEBUG_SERIAL.print(F("Roll: "));
+	DEBUG_SERIAL.println(gyro_roll_cal);
+	DEBUG_SERIAL.print(F("Pitch: "));
+	DEBUG_SERIAL.println(gyro_pitch_cal);
+	DEBUG_SERIAL.print(F("Yaw: "));
+	DEBUG_SERIAL.println(gyro_yaw_cal);
 #endif
 
 	// Enable subtracting calibration values
@@ -187,7 +187,7 @@ void imu_calibrate_acc(void) {
 
 	// Print to the serial port if needed
 #ifdef PRINT_LEVEL_CALIBRATION
-	TELEMETRY_SERIAL.println(F("Calibrating level..."));
+	DEBUG_SERIAL.println(F("Calibrating level..."));
 #endif
 
 	// Reset gyro calibration values
@@ -214,12 +214,12 @@ void imu_calibrate_acc(void) {
 
 	// Print to the serial port if needed
 #ifdef PRINT_LEVEL_CALIBRATION
-	TELEMETRY_SERIAL.println(F("Calibration done"));
-	TELEMETRY_SERIAL.println(F("New values:"));
-	TELEMETRY_SERIAL.print(F("Roll: "));
-	TELEMETRY_SERIAL.println(acc_roll_cal);
-	TELEMETRY_SERIAL.print(F("Pitch: "));
-	TELEMETRY_SERIAL.println(acc_pitch_cal);
+	DEBUG_SERIAL.println(F("Calibration done"));
+	DEBUG_SERIAL.println(F("New values:"));
+	DEBUG_SERIAL.print(F("Roll: "));
+	DEBUG_SERIAL.println(acc_roll_cal);
+	DEBUG_SERIAL.print(F("Pitch: "));
+	DEBUG_SERIAL.println(acc_pitch_cal);
 #endif
 
 	// Enable subtracting calibration values

@@ -60,6 +60,10 @@ void setup()
     // UART setup
     TELEMETRY_SERIAL.begin(TELEMETRY_BAUDRATE);
     delay(250);
+#ifdef DEBUGGER
+    DEBUG_SERIAL.begin(TELEMETRY_BAUDRATE);
+    delay(250);
+#endif
     gps_setup();
 
     // Other modules setup
@@ -90,6 +94,10 @@ void setup()
 
     // Flush serial buffer
     TELEMETRY_SERIAL.flush();
+    GPS_SERIAL.flush();
+#ifdef DEBUGGER
+    DEBUG_SERIAL.flush();
+#endif
 
     // Set the initial compass heading
     angle_yaw = actual_compass_heading;

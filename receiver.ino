@@ -143,9 +143,10 @@ void receiver_start_stop(void) {
 #ifdef SONARUS_TAKEOFF_DETECTION
 		sonar_2_at_start = sonar_2_raw;
 #endif
-#ifdef SONARUS_LINK_STAB
+#ifdef LIBERTY_LINK
 		pid_output_sonar = 0;
 		pid_i_mem_sonar = 0;
+		pid_last_sonar_d_error = 0;
 #endif
 #endif
 		acc_alt_integrated = 0;
@@ -160,9 +161,10 @@ void receiver_start_stop(void) {
 			pid_roll_pitch_yaw_reset();
 			pid_altitude_reset();
 			pid_gps_reset();
-#ifdef SONARUS_LINK_STAB
+#ifdef LIBERTY_LINK
 			pid_output_sonar = 0;
 			pid_i_mem_sonar = 0;
+			pid_last_sonar_d_error = 0;
 #endif
 
 			// Raise altitude to some point
@@ -213,9 +215,10 @@ void receiver_start_stop(void) {
 			pid_roll_pitch_yaw_reset();
 			pid_altitude_reset();
 			pid_gps_reset();
-#ifdef SONARUS_LINK_STAB
+#ifdef LIBERTY_LINK
 			pid_output_sonar = 0;
 			pid_i_mem_sonar = 0;
+			pid_last_sonar_d_error = 0;
 #endif
 		}
 #if defined(SONARUS) && defined(SONARUS_TAKEOFF_DETECTION)
@@ -298,18 +301,18 @@ void ppm_decoder(void) {
 
 	if (channel_select_counter == 1)
 		channel_1 = measured_time;
-	else if (channel_select_counter == 2)
+	if (channel_select_counter == 2)
 		channel_2 = measured_time;
-	else if (channel_select_counter == 3)
+	if (channel_select_counter == 3)
 		channel_3 = measured_time;
-	else if (channel_select_counter == 4)
+	if (channel_select_counter == 4)
 		channel_4 = measured_time;
-	else if (channel_select_counter == 5)
+	if (channel_select_counter == 5)
 		channel_5 = measured_time;
-	else if (channel_select_counter == 6)
+	if (channel_select_counter == 6)
 		channel_6 = measured_time;
-	else if (channel_select_counter == 7)
+	if (channel_select_counter == 7)
 		channel_7 = measured_time;
-	else if (channel_select_counter == 8)
+	if (channel_select_counter == 8)
 		channel_8 = measured_time;
 }

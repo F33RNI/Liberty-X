@@ -50,11 +50,25 @@ void liberty_link_handler(void) {
         if (link_direct_control)
             flight_mode = 1;
 
-        // Course P controller
-        if (angle_yaw > 180)
-            waypoint_yaw_correction = (waypoint_course - (angle_yaw - 360.f)) * WAYP_YAW_CORRECTION_TERM;
+        // Allpy yaw correction only if the drone is far from the waypoint
+        if (abs(l_lat_setpoint - l_lat_waypoint) > GPS_SETPOINT_MAX_DISTANCE
+            || abs(l_lon_setpoint - l_lon_waypoint) > GPS_SETPOINT_MAX_DISTANCE) {
+            // Course P controller
+            if (abs(waypoint_course - angle_yaw) > 180)
+                waypoint_yaw_correction = (angle_yaw - waypoint_course) * WAYP_YAW_CORRECTION_TERM;
+            else
+                waypoint_yaw_correction = (waypoint_course - angle_yaw) * WAYP_YAW_CORRECTION_TERM;
+
+            // Trim yaw correction
+            if (waypoint_yaw_correction > WAYP_YAW_CORRECTION_MAX)
+                waypoint_yaw_correction = WAYP_YAW_CORRECTION_MAX;
+            else if (waypoint_yaw_correction < WAYP_YAW_CORRECTION_MAX * -1)
+                waypoint_yaw_correction = WAYP_YAW_CORRECTION_MAX * -1;
+        }
+
+        // Reset yaw correction if the drone is near the waypoint
         else
-            waypoint_yaw_correction = (waypoint_course - angle_yaw) * WAYP_YAW_CORRECTION_TERM;
+            waypoint_yaw_correction = 0;
 
         // ---------------------------------------------
         // Step TAKEOFF. Waiting for takeoff
@@ -100,7 +114,9 @@ void liberty_link_handler(void) {
                 }
 
                 // Calculate course
-                waypoint_course = atan2(l_lon_waypoint - l_lon_setpoint, l_lat_waypoint - l_lat_setpoint) * RAD_TO_DEG;
+                waypoint_course = atan2(l_lon_waypoint - l_lon_gps, l_lat_waypoint - l_lat_gps) * RAD_TO_DEG;
+                if (waypoint_course < 0)
+                    waypoint_course += 360;
 
                 // If the drone is nearby to the waypoint, go to the GPS setpoint
                 if (abs(l_lat_setpoint - l_lat_waypoint) < GPS_SETPOINT_MAX_DISTANCE
@@ -123,7 +139,7 @@ void liberty_link_handler(void) {
 
                         // Reset latitude float adjustments if direction has changed
                         if ((l_lon_waypoint > l_lon_setpoint && l_lon_waypoint_last < l_lon_setpoint) ||
-                            (l_lon_waypoint < l_lat_setpoint && l_lon_waypoint_last > l_lon_setpoint))
+                            (l_lon_waypoint < l_lon_setpoint && l_lon_waypoint_last > l_lon_setpoint))
                             l_lon_gps_float_adjust = 0;
 
                         // Recalculate factors if waypoint has changed
@@ -206,7 +222,7 @@ void liberty_link_handler(void) {
             // Reset setpoint of sonarus
             pid_sonar_setpoint = 0;
 
-            // Start auto-landing sequence if waypoint command is landinf
+            // Start auto-landing sequence if waypoint command is landing
             if (waypoint_command == WAYP_CMD_BITS_LAND) {
                 if (!auto_landing_step)
                     auto_landing_step = 1;
@@ -239,14 +255,20 @@ void liberty_link_handler(void) {
         // ---------------------------------------------
         else if (link_waypoint_step == LINK_STEP_DESCENT) {
             // Switch to sonarus stabilization if the required height is reached
-            if (sonar_2_raw > 0 && sonar_2_raw <= SONARUS_DESCENT_MM) {
+            if (sonar_2_raw > 0 && sonar_2_raw < SONARUS_DESCENT_MM) {
                 link_waypoint_step = LINK_STEP_SONARUS;
                 link_waypoint_loop_counter = 0;
             }
-
-            // Increase pressure (decrease altitude)
-            else
+            
+            else {
+                // Increase pressure (decrease altitude)
                 pid_alt_setpoint += WAYPOINT_ALTITUDE_TERM;
+
+                // Reset sonarus PID controller
+                pid_output_sonar = 0;
+                pid_i_mem_sonar = 0;
+                pid_last_sonar_d_error = 0;
+            }
         }
 
         // ---------------------------------------------
@@ -304,9 +326,8 @@ void liberty_link_handler(void) {
 /// Performs pre-flight checks, auto take-off and begins the Liberty-Way sequence
 /// </summary>
 void link_start_and_takeoff(void) {
-    // Perform pre-flight checks
-    if (!takeoff_detected && start < 1 && channel_3 > 1050 && channel_6 > 1500
-        && number_used_sats >= LINK_MIN_NUM_SATS && (battery_voltage >= LINK_MIN_BAT_VOLTAGE || battery_voltage < 6.f)) {
+    // Takeoff
+    if (!takeoff_detected && start < 1 && channel_3 > 1050 && channel_6 > 1500) {
 
         // Remember ground pressure
         ground_pressure = actual_pressure;
