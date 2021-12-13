@@ -149,6 +149,7 @@ uint8_t link_buffer[12], link_buffer_counter, link_byte_previous;
 uint8_t link_check_byte, link_temp_byte;
 uint8_t link_lost_counter = UINT8_MAX;
 uint16_t link_waypoint_loop_counter;
+boolean link_takeoff_flag;
 
 int32_t waypoints_lat[16], waypoints_lon[16];
 uint8_t waypoints_command[16], waypoint_command;

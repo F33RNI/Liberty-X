@@ -110,6 +110,24 @@ void receiver_start_stop(void) {
 	if (start == 0 && channel_3 < 1050 && channel_6 > 1500) {
 		// Switch to the step 2 if throttle stick is in lowest position and arm switch is on
 		start = 1;
+
+#ifdef LIBERTY_LINK
+		if (link_takeoff_flag) {
+			// Reset takeoff flag
+			link_takeoff_flag = 0;
+
+			// Check sonarus
+#ifdef SONARUS
+			if (sonar_2_raw == 0 || sonar_2_raw > SONARUS_DESCENT_MM) {
+				start = 0;
+				error = 9;
+			}
+#endif
+			// Execute FTS if error occurs
+			if (error)
+				liberty_x_fts();
+		}
+#endif
 	}
 
 	// Record ground pressure
@@ -165,6 +183,10 @@ void receiver_start_stop(void) {
 			pid_output_sonar = 0;
 			pid_i_mem_sonar = 0;
 			pid_last_sonar_d_error = 0;
+			l_lat_gps_float_adjust = 0;
+			l_lon_gps_float_adjust = 0;
+			waypoint_move_factor = 0;
+			link_begin_sequence();
 #endif
 
 			// Raise altitude to some point
@@ -176,10 +198,8 @@ void receiver_start_stop(void) {
 			takeoff_throttle = 0;
 			start = 0;
 
-			// Reset liberty-link variables
-#ifdef LIBERTY_LINK
-			link_clear_disarm();
-#endif
+			// Execute FTS
+			liberty_x_fts();
 		}
 	}
 
@@ -228,6 +248,11 @@ void receiver_start_stop(void) {
 			// Set the take-off detected variable to 1 to indicate a take-off
 			takeoff_detected = 1;
 
+			// Start Liberty-Way sequence
+#ifdef LIBERTY_LINK
+			link_begin_sequence();
+#endif
+
 			// Set the altitude setpoint
 			pid_alt_setpoint = ground_pressure - PRESSURE_TAKEOFF;
 
@@ -246,6 +271,11 @@ void receiver_start_stop(void) {
 			// A take-off is detected when the quadcopter is accelerating
 			// Set the take-off detected variable to 1 to indicate a take-off
 			takeoff_detected = 1;
+
+			// Start Liberty-Way sequence
+#ifdef LIBERTY_LINK
+			link_begin_sequence();
+#endif
 
 			// Set the altitude setpoint
 			pid_alt_setpoint = ground_pressure - PRESSURE_TAKEOFF;

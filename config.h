@@ -55,7 +55,7 @@ const float VOLTAGE_ADC_DIVIDER PROGMEM = 109.88;
 //#define DISABLE_MOTORS
 
 // Takeoff throttle set 0 to enable auto-takeoff
-const int32_t MANUAL_TAKEOFF_THROTTLE PROGMEM = 1510; //1500
+const int32_t MANUAL_TAKEOFF_THROTTLE PROGMEM = 0; //1515
 
 // Throttle in flight_mode = 1 will be passed through the exp() function to reduce the sharpness
 // Excel formula (input: column A, output: column B):
@@ -192,7 +192,7 @@ const uint8_t LINK_LOST_CYCLES PROGMEM = 125;
 const int32_t GPS_SETPOINT_MAX_DISTANCE PROGMEM = 5;
 
 // How many pascals to reduce the pressure (raise the altitude) before GPS flight
-const float LINK_PRESSURE_ASCEND PROGMEM = 20;
+const float LINK_PRESSURE_ASCEND PROGMEM = 12;
 
 // GPS waypoint move speed factor on short distances (default = 0.05, larger = faster)
 const float WAYPOINT_GPS_MIN_FACTOR PROGMEM = 0.015;
@@ -259,10 +259,10 @@ const uint8_t BURST_BYTES PROGMEM = 4;
 const uint16_t DEBUG_SEND_CYCLES PROGMEM = 25;
 
 // Variables to debug
-#define DEBUG_VAR_1				waypoint_course
-#define DEBUG_VAR_2				angle_yaw
-#define DEBUG_VAR_3				waypoint_yaw_correction
-//#define DEBUG_VAR_4				gps_pitch_adjust
+#define DEBUG_VAR_1				pid_roll_setpoint_base
+#define DEBUG_VAR_2				pid_pitch_setpoint_base
+#define DEBUG_VAR_3				gps_roll_adjust
+#define DEBUG_VAR_4				gps_pitch_adjust
 #endif
 
 

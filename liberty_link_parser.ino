@@ -144,11 +144,19 @@ void liberty_link_parser(void) {
                     // Parse new waypoint command
                     waypoints_command[link_system_data] = link_system_cmd;
 
-                    // Request waypoint recalculation if liberty-way is working and not in auto-landing mode and waypoint has changed
-                    if (!auto_landing_step && link_waypoint_step > LINK_STEP_WAYP_CALC && link_waypoint_step < LINK_STEP_DESCENT
-                        && (l_lat_waypoint != waypoints_lat[waypoints_index] || l_lon_waypoint != waypoints_lon[waypoints_index] 
-                            || waypoint_command != waypoints_command[waypoints_index]))
-                        link_waypoint_step = LINK_STEP_WAYP_CALC;
+                    // Request waypoint recalculation
+                    if (!auto_landing_step && link_waypoint_step > LINK_STEP_WAYP_CALC
+                        && (l_lat_waypoint != waypoints_lat[waypoints_index]
+                            || l_lon_waypoint != waypoints_lon[waypoints_index]
+                            || waypoint_command != waypoints_command[waypoints_index])) {
+
+                        // Request recalculation id link_waypoint_step < LINK_STEP_DESCENT or if in direct control mode
+                        if (link_waypoint_step < LINK_STEP_DESCENT
+                            || (link_waypoint_step <= LINK_STEP_AFTER_SONARUS
+                                && waypoint_command < WAYP_CMD_BITS_FLY
+                                && waypoints_command[waypoints_index] < WAYP_CMD_BITS_FLY))
+                            link_waypoint_step = LINK_STEP_WAYP_CALC;
+                    }
 
                     // Clear direct control flag
                     link_direct_control = 0;

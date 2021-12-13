@@ -239,14 +239,14 @@ void liberty_link_handler(void) {
                 }
             }
 
-            // Switch to parsel drop if waypoint command is drop a parcel
-            else if (waypoint_command == WAYP_CMD_BITS_PARCEL) {
+            // Switch to parsel drop or descending if waypoint command is drop a parcel or descending
+            else if (waypoint_command == WAYP_CMD_BITS_PARCEL || waypoint_command == WAYP_CMD_BITS_DESCEND) {
                 link_waypoint_step = LINK_STEP_DESCENT;
             }
 
             // Set sonarus setpoint to SONARUS_DESCENT_MM if waypoint command is descending
-            else if (waypoint_command == WAYP_CMD_BITS_DDC || waypoint_command == WAYP_CMD_BITS_DESCEND) {
-                link_waypoint_step = LINK_STEP_DESCENT;
+            else if (waypoint_command == WAYP_CMD_BITS_DDC) {
+                //link_waypoint_step = LINK_STEP_DESCENT;
             }
         }
 
@@ -323,22 +323,25 @@ void liberty_link_handler(void) {
 }
 
 /// <summary>
-/// Performs pre-flight checks, auto take-off and begins the Liberty-Way sequence
+/// Performs auto take-off and begins the Liberty-Way sequence
 /// </summary>
 void link_start_and_takeoff(void) {
-    // Takeoff
-    if (!takeoff_detected && start < 1 && channel_3 > 1050 && channel_6 > 1500) {
+    if (link_allowed && !takeoff_detected && start < 1 && channel_3 > 1050 && channel_6 > 1500)
+        link_takeoff_flag = 1;
+}
 
-        // Remember ground pressure
-        ground_pressure = actual_pressure;
-        start = 1;
+/// <summary>
+/// Starts Liberty-way sequence after takeoff
+/// </summary>
+void link_begin_sequence(void) {
+    // Start Liberty-Way sequence
+    link_waypoint_step = LINK_STEP_TAKEOFF;
 
-        // Start Liberty-Way sequence
-        link_waypoint_step = LINK_STEP_TAKEOFF;
+    // Start from beggining of the waypoints array
+    waypoints_index = 0;
 
-        // Start from beggining of the waypoints array
-        waypoints_index = 0;
-    }
+    // Reset takeoff flag
+    link_takeoff_flag = 0;
 }
 
 /// <summary>
@@ -413,7 +416,8 @@ void liberty_x_fts(void) {
     while (true)
     {
         // Set error to 8 (FTS)
-        error = 8;
+        if (!error)
+            error = 8;
 
         // Blink with LEDs
         leds_error_signal();
