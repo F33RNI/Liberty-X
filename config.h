@@ -135,28 +135,23 @@ const int16_t GPS_PREDICT_AFTER_CYCLES PROGMEM = 5;
 #define SONARUS
 
 #ifdef SONARUS
-// Whether to detect liftoff using sonar 2. Comment to determine takeoff based on acceleration only
-//#define SONARUS_TAKEOFF_DETECTION
-
-// Determine that the drone has taken off if the distance from the sonar has changed more than this number
-#ifdef SONARUS_TAKEOFF_DETECTION
-const uint16_t SONARUS_TAKEOFF_INCREMENT PROGMEM = 9;
-#endif
-
 // Request distance value every 20 * 4ms = 80ms
 const uint8_t SONARUS_REQUST_CYCLES PROGMEM = 20;
 
 // Speed of sound in m/s * 10000
 const uint16_t SOUND_SPEED PROGMEM = 343;
 
-// Minimum distance (in mm) at which collision protection begins (default: 1000)
-const uint16_t SONARUS_SPRING_START PROGMEM = 1000;
+// Uncomment this to enable collision protection
+#define SONARUS_COLLISION_PROTECTION
 
-// At what distance (in mm) the maximum pitch back will be set (default: 100)
-const uint16_t SONARUS_SPRING_STOP PROGMEM = 100;
+#ifdef SONARUS_COLLISION_PROTECTION
+// From what distance (in mm) the collision protection algorithm will be executed
+const uint16_t SONARUS_COLLISION_PROTECTION_START PROGMEM = 1000;
 
-// Maximum backward pitch value (1500 + SONARUS_MAX_PITCH)
-const uint16_t SONARUS_MAX_PITCH PROGMEM = 0;
+// For how many cycles the distance from Sonarus must be less than
+// SONARUS_COLLISION_PROTECTION_START for anti-collision protection to start
+const uint8_t SONARUS_COLLISION_PROTECTION_CYCLES PROGMEM = 5;
+#endif
 #endif
 
 

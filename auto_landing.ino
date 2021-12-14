@@ -32,11 +32,26 @@
 /// <param name=""></param>
 void auto_landing(void) {
 
-    // Step 1. Altitude reduction for auto-landing
-	if (auto_landing_step == 1) {
+    // Step 1. Set current gps position as setpoint
+    if (auto_landing_step == 1) {
+        // Set setpoints and waypoints
+        l_lat_setpoint = l_lat_gps;
+        l_lon_setpoint = l_lon_gps;
+        l_lat_waypoint = l_lat_gps;
+        l_lon_waypoint = l_lon_gps;
+
+        // Reset GPS PID
+        pid_gps_reset();
+
+        // Switch to altitude reduction
+        auto_landing_step = 2;
+    }
+
+    // Step 2. Altitude reduction for auto-landing
+	if (auto_landing_step == 2) {
         // Turn off motors if current altitude stops decreasing
         if (pid_alt_setpoint > actual_pressure + 100)
-            auto_landing_step = 2;
+            auto_landing_step = 3;
 
         // Set current flight mode to GPS or altitude stabilization
         if (link_allowed)
@@ -48,8 +63,8 @@ void auto_landing(void) {
         pid_alt_setpoint += AUTO_LANDING_ALTITUDE_TERM;
 	}
 
-    // Step 2. Turn off the motors
-    else if (auto_landing_step == 2) {
+    // Step 3. Turn off the motors
+    else if (auto_landing_step == 3) {
         // Set current flight mode to GPS or altitude stabilization
         if (link_allowed)
             flight_mode = 3;

@@ -95,10 +95,10 @@ const float PID_ALT_MAX PROGMEM = 200;
 /*****************************/
 /*            GPS            */
 /*****************************/
-// GPS P-controller (default = 2.7)1.8
+// GPS P-controller (default = 3.4)
 float PID_GPS_P = 3.4;
 
-// GPS rotating-memory D-controller (default = 6.5)12.0
+// GPS rotating-memory D-controller (default = 7.6)
 float PID_GPS_D = 7.6;
 
 // Maximum output of the PID - controller (+ / -)
@@ -110,16 +110,31 @@ const float PID_GPS_MAX PROGMEM = 300;
 /*            Sonarus            */
 /*********************************/
 // Sonarus P-controller (default = 0.24)
-float PID_SONARUS_P = 0.22f;
+const float PID_SONARUS_P PROGMEM = 0.22f;
 
 // Sonarus I-controller (default = 0.0006)
-float PID_SONARUS_I = 0.0006f;
+const float PID_SONARUS_I PROGMEM = 0.0006f;
 
 // Sonarus D-controller (default = 22.)
-float PID_SONARUS_D = 24.f;
+const float PID_SONARUS_D PROGMEM = 24.f;
 
 // Maximum output of the PID - controller (+ / -)
 const float PID_SONARUS_MAX PROGMEM = 150;
+#endif
+
+
+#ifdef SONARUS_COLLISION_PROTECTION
+/******************************************************/
+/*            Sonarus collision protection            */
+/******************************************************/
+// Sonarus collision protection P-controller (default = 0.6)
+const float SONARUS_PROTECTION_P PROGMEM = 0.6f;
+
+// Sonarus collision protection D-controller (default = 4.)
+const float SONARUS_PROTECTION_D PROGMEM = 4.f;
+
+// Maximum output of the PD - controller (+ / -)
+const float SONARUS_PROTECTION_MAX PROGMEM = 200;
 #endif
 
 

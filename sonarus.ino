@@ -102,21 +102,22 @@ void sonarus(void) {
 	// Increment counter every cycle
 	sonarus_cycle_counter++;
 
+#ifdef SONARUS_COLLISION_PROTECTION
+	// Clear collision_protection_started flag if drone is not in flight
+	if (!takeoff_detected || start < 2)
+		collision_protection_started = 0;
+#endif
+
 	// Last cycle. Request LUX data
 	if (sonarus_cycle_counter >= SONARUS_REQUST_CYCLES) {
 		// Restart counter
 		sonarus_cycle_counter = 0;
 
-		// Store previous value
-#ifdef SONARUS_TAKEOFF_DETECTION
-		sonar_2_prev = sonar_2_raw;
-#endif
-
 		// Request 4 bytes from sonarus (2 bytes per sonar)
 		HWire.requestFrom(SONARUS_ADDRESS, 4);
 
 		// Read distance from first sonar
-		sonar_1_raw = HWire.read() << 8 | HWire.read();
+		sonarus_front = HWire.read() << 8 | HWire.read();
 
 		// Read distance from second sonar
 		sonarus_bottom = HWire.read() << 8 | HWire.read();
@@ -126,11 +127,29 @@ void sonarus(void) {
 		if (sonarus_bottom_compressed > 255)
 			sonarus_bottom_compressed = 255;
 
-		// Calculate loop_add for sonarus predistions
+		// Calculate loop_add for sonarus predictions
 		sonarus_bottom_loop_add = ((float)sonarus_bottom - (float)sonarus_bottom_previous) / SONARUS_REQUST_CYCLES;
 
 		// Store old second sonar value
 		sonarus_bottom_previous = sonarus_bottom;
+		
+#ifdef SONARUS_COLLISION_PROTECTION
+		// Increment or decrement collision protection counter
+		if (sonarus_front > 0 && sonarus_front <= SONARUS_COLLISION_PROTECTION_START) {
+			if (collision_protection_counter < SONARUS_COLLISION_PROTECTION_CYCLES)
+				collision_protection_counter++;
+		}
+		else if (collision_protection_counter > 0)
+			collision_protection_counter--;
+
+		// Execute collision protection
+		if (start > 1 && takeoff_detected && !auto_landing_step && !collision_protection_started
+			&& collision_protection_counter >= SONARUS_COLLISION_PROTECTION_CYCLES)
+			sonarus_start_collision_protection();
+
+		// Collision protection PD controller
+		sonarus_collision_protection();
+#endif
 	}
 
 	// Sonarus predictions
@@ -182,7 +201,6 @@ void sonarus_pid(void) {
 		sonarus_pid_reset();
 }
 
-
 /// <summary>
 /// Resets bottom sonarus PID controller
 /// </summary>
@@ -192,4 +210,47 @@ void sonarus_pid_reset(void) {
 	pid_i_mem_sonarus = 0;
 	pid_last_sonarus_d_error = 0;
 }
+
+#ifdef SONARUS_COLLISION_PROTECTION
+/// <summary>
+/// Start collision protection and auto-landing sequence
+/// </summary>
+/// <param name=""></param>
+void sonarus_start_collision_protection(void) {
+	// Show error
+	error = 10;
+
+	// Start auto-landing
+	auto_landing_step = 1;
+
+	// Start PD-controller
+	collision_protection_started = 1;
+}
+
+/// <summary>
+/// Brings the drone back
+/// </summary>
+/// <param name=""></param>
+void sonarus_collision_protection(void) {
+	// Execute PD controller
+	if (collision_protection_started && sonarus_front > 0 && sonarus_front <= SONARUS_COLLISION_PROTECTION_START) {
+		pid_error_temp = (float)SONARUS_COLLISION_PROTECTION_START - (float)sonarus_front;
+
+		collision_protection_pitch = SONARUS_PROTECTION_P * pid_error_temp + SONARUS_PROTECTION_D * (pid_error_temp - sonarus_front_d_error);
+
+		if (collision_protection_pitch > SONARUS_PROTECTION_MAX)
+			collision_protection_pitch = SONARUS_PROTECTION_MAX;
+		else if (collision_protection_pitch < SONARUS_PROTECTION_MAX * -1)
+			collision_protection_pitch = SONARUS_PROTECTION_MAX * -1;
+
+		sonarus_front_d_error = pid_error_temp;
+	}
+
+	// Reset PD controller if the distance is normal
+	else {
+		collision_protection_pitch = 0;
+		sonarus_front_d_error = 0;
+	}
+}
+#endif
 #endif

@@ -169,10 +169,16 @@ uint32_t telemetry_buffer_bytes;
 // Sonars
 #ifdef SONARUS
 uint8_t sonarus_cycle_counter;
-uint16_t sonar_1_raw, sonarus_bottom, sonarus_bottom_compressed;
+uint16_t sonarus_front, sonarus_bottom, sonarus_bottom_compressed;
 uint16_t sonarus_bottom_previous;
 float sonarus_bottom_loop_add, sonarus_bottom_add;
 int16_t sonarus_bottom_add_counter;
+#ifdef SONARUS_COLLISION_PROTECTION
+uint8_t collision_protection_counter;
+boolean collision_protection_started;
+float sonarus_front_d_error;
+float collision_protection_pitch;
+#endif
 #ifdef LIBERTY_LINK
 float pid_i_mem_sonarus, pid_sonarus_setpoint, pid_last_sonarus_d_error, pid_output_sonarus;
 #endif
