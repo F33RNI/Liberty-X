@@ -118,7 +118,7 @@ void receiver_start_stop(void) {
 
 			// Check sonarus
 #ifdef SONARUS
-			if (sonar_2_raw == 0 || sonar_2_raw > SONARUS_DESCENT_MM) {
+			if (sonarus_bottom == 0 || sonarus_bottom > SONARUS_DESCENT_MM) {
 				start = 0;
 				error = 9;
 			}
@@ -162,9 +162,7 @@ void receiver_start_stop(void) {
 		sonar_2_at_start = sonar_2_raw;
 #endif
 #ifdef LIBERTY_LINK
-		pid_output_sonar = 0;
-		pid_i_mem_sonar = 0;
-		pid_last_sonar_d_error = 0;
+		sonarus_pid_reset();
 #endif
 #endif
 		acc_alt_integrated = 0;
@@ -180,9 +178,7 @@ void receiver_start_stop(void) {
 			pid_altitude_reset();
 			pid_gps_reset();
 #ifdef LIBERTY_LINK
-			pid_output_sonar = 0;
-			pid_i_mem_sonar = 0;
-			pid_last_sonar_d_error = 0;
+			sonarus_pid_reset();
 			l_lat_gps_float_adjust = 0;
 			l_lon_gps_float_adjust = 0;
 			waypoint_move_factor = 0;
@@ -236,9 +232,7 @@ void receiver_start_stop(void) {
 			pid_altitude_reset();
 			pid_gps_reset();
 #ifdef LIBERTY_LINK
-			pid_output_sonar = 0;
-			pid_i_mem_sonar = 0;
-			pid_last_sonar_d_error = 0;
+			sonarus_pid_reset();
 #endif
 		}
 #if defined(SONARUS) && defined(SONARUS_TAKEOFF_DETECTION)

@@ -109,17 +109,17 @@ const float PID_GPS_MAX PROGMEM = 300;
 /*********************************/
 /*            Sonarus            */
 /*********************************/
-// Sonarus P-controller (default = 0.076)
-const float PID_SONARUS_P PROGMEM = 0.076;
+// Sonarus P-controller (default = 0.24)
+float PID_SONARUS_P = 0.22f;
 
-// Sonarus I-controller (default = 0.002)
-const float PID_SONARUS_I PROGMEM = 0.002;
+// Sonarus I-controller (default = 0.0006)
+float PID_SONARUS_I = 0.0006f;
 
-// Sonarus D-controller (default = 0.58)
-const float PID_SONARUS_D PROGMEM = 0.58;
+// Sonarus D-controller (default = 22.)
+float PID_SONARUS_D = 24.f;
 
 // Maximum output of the PID - controller (+ / -)
-const float PID_SONARUS_MAX PROGMEM = 100;
+const float PID_SONARUS_MAX PROGMEM = 150;
 #endif
 
 

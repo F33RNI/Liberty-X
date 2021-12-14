@@ -220,7 +220,7 @@ void liberty_link_handler(void) {
             l_lon_setpoint = l_lon_waypoint;
 
             // Reset setpoint of sonarus
-            pid_sonar_setpoint = 0;
+            pid_sonarus_setpoint = 0;
 
             // Start auto-landing sequence if waypoint command is landing
             if (waypoint_command == WAYP_CMD_BITS_LAND) {
@@ -255,7 +255,7 @@ void liberty_link_handler(void) {
         // ---------------------------------------------
         else if (link_waypoint_step == LINK_STEP_DESCENT) {
             // Switch to sonarus stabilization if the required height is reached
-            if (sonar_2_raw > 0 && sonar_2_raw < SONARUS_DESCENT_MM) {
+            if (sonarus_bottom > 0 && sonarus_bottom < SONARUS_DESCENT_MM) {
                 link_waypoint_step = LINK_STEP_SONARUS;
                 link_waypoint_loop_counter = 0;
             }
@@ -265,9 +265,7 @@ void liberty_link_handler(void) {
                 pid_alt_setpoint += WAYPOINT_ALTITUDE_TERM;
 
                 // Reset sonarus PID controller
-                pid_output_sonar = 0;
-                pid_i_mem_sonar = 0;
-                pid_last_sonar_d_error = 0;
+                sonarus_pid_reset();
             }
         }
 
@@ -287,7 +285,7 @@ void liberty_link_handler(void) {
             }
 
             // Execute 2nd sonar PID controller
-            pid_sonar_setpoint = SONARUS_DESCENT_MM;
+            pid_sonarus_setpoint = SONARUS_DESCENT_MM;
             sonarus_pid();
         }
 
@@ -302,8 +300,8 @@ void liberty_link_handler(void) {
                     waypoints_index++;
 
                 // Store new ground pressure
-                if (sonar_2_raw > 0)
-                    ground_pressure = actual_pressure + (float)sonar_2_raw / 84.2f;
+                if (sonarus_bottom > 0)
+                    ground_pressure = actual_pressure + (float)sonarus_bottom / 84.2f;
                 else
                     ground_pressure = actual_pressure + (float)SONARUS_DESCENT_MM / 84.2f;
 
@@ -316,7 +314,7 @@ void liberty_link_handler(void) {
             }
 
             // Execute 2nd sonar PID controller
-            pid_sonar_setpoint = SONARUS_DESCENT_MM;
+            pid_sonarus_setpoint = SONARUS_DESCENT_MM;
             sonarus_pid();
         }
     }
@@ -366,7 +364,7 @@ void link_check_and_turnoff_motors(void) {
     if (start > 0) {
         // Turn off the motors if SONARUS is enabled and altitude is less than SONARUS_LINK_MTOF and not equal to 0
 #if (defined(SONARUS) && defined(SONARUS_MTOF_PROTECTION))
-        if (sonar_2_raw && sonar_2_raw < SONARUS_LINK_MTOF) {
+        if (!sonarus_bottom || sonarus_bottom < SONARUS_LINK_MTOF) {
             start = 0;
             takeoff_detected = 0;
             link_clear_disarm();

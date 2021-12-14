@@ -55,7 +55,7 @@ const float VOLTAGE_ADC_DIVIDER PROGMEM = 109.88;
 //#define DISABLE_MOTORS
 
 // Takeoff throttle set 0 to enable auto-takeoff
-const int32_t MANUAL_TAKEOFF_THROTTLE PROGMEM = 0; //1515
+const int32_t MANUAL_TAKEOFF_THROTTLE PROGMEM = 1515; //1515
 
 // Throttle in flight_mode = 1 will be passed through the exp() function to reduce the sharpness
 // Excel formula (input: column A, output: column B):
@@ -77,10 +77,10 @@ const int32_t AUTO_TAKEOFF_ACC_THRESHOLD PROGMEM = 800;
 /*            IMU            */
 /*****************************/
 // Level calibration value. Increasing causes moving to the right (>). Uncomment to overwrite the read from EEPROM
-#define ACC_CALIBRATION_ROLL	-70
+#define ACC_CALIBRATION_ROLL	-40
 
 // Level calibration value. Increasing causes moving backward (\/). Uncomment to overwrite the read from EEPROM
-#define ACC_CALIBRATION_PITCH	1100
+#define ACC_CALIBRATION_PITCH	1110
 
 // Pring level calibration values to the serial port
 #define PRINT_LEVEL_CALIBRATION
@@ -259,10 +259,10 @@ const uint8_t BURST_BYTES PROGMEM = 4;
 const uint16_t DEBUG_SEND_CYCLES PROGMEM = 25;
 
 // Variables to debug
-#define DEBUG_VAR_1				pid_roll_setpoint_base
-#define DEBUG_VAR_2				pid_pitch_setpoint_base
-#define DEBUG_VAR_3				gps_roll_adjust
-#define DEBUG_VAR_4				gps_pitch_adjust
+#define DEBUG_VAR_1				PID_SONARUS_D
+//#define DEBUG_VAR_2				pid_pitch_setpoint_base
+//#define DEBUG_VAR_3				gps_roll_adjust
+//#define DEBUG_VAR_4				gps_pitch_adjust
 #endif
 
 

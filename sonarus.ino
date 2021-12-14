@@ -119,12 +119,38 @@ void sonarus(void) {
 		sonar_1_raw = HWire.read() << 8 | HWire.read();
 
 		// Read distance from second sonar
-		sonar_2_raw = HWire.read() << 8 | HWire.read();
+		sonarus_bottom = HWire.read() << 8 | HWire.read();
 
 		// Convert 2 distance to cm/2
-		sonar_2_compressed = sonar_2_raw / 20;
-		if (sonar_2_compressed > 255)
-			sonar_2_compressed = 255;
+		sonarus_bottom_compressed = sonarus_bottom / 20;
+		if (sonarus_bottom_compressed > 255)
+			sonarus_bottom_compressed = 255;
+
+		// Calculate loop_add for sonarus predistions
+		sonarus_bottom_loop_add = ((float)sonarus_bottom - (float)sonarus_bottom_previous) / SONARUS_REQUST_CYCLES;
+
+		// Store old second sonar value
+		sonarus_bottom_previous = sonarus_bottom;
+	}
+
+	// Sonarus predictions
+	else {
+		// Add the simulated part to a buffer float variables because the sonarus_bottom can only hold integers
+		sonarus_bottom_add += sonarus_bottom_loop_add;
+
+		// If the absolute value of sonarus_bottom_add is larger then 1
+		if (abs(sonarus_bottom_add) >= 1) {
+			// Prevent overflowing (going below zero)
+			if ((int)sonarus_bottom + (int)sonarus_bottom_add >= 0) {
+				// Increment the sonarus_bottom value with the sonarus_bottom_add value as an integer
+				sonarus_bottom += (int)sonarus_bottom_add;
+
+				// Subtract the sonarus_bottom_add value as an integer so the decimal value remains
+				sonarus_bottom_add -= (int)sonarus_bottom_add;
+			}
+			else
+				sonarus_bottom = 0;
+		}
 	}
 }
 
@@ -133,22 +159,37 @@ void sonarus(void) {
 /// </summary>
 /// <param name=""></param>
 void sonarus_pid(void) {
-	// Disable pressure control
-	pid_alt_setpoint = actual_pressure;
+	// Execute Sonarus PID controller only if sonarus_bottom is not zero
+	if (sonarus_bottom > 0) {
+		// Disable pressure control
+		pid_alt_setpoint = actual_pressure;
 
-	// Execute Sonarus PID controller only if sonarus_cycle_counter is 1
-	if (sonarus_cycle_counter == 1) {
-		pid_error_temp = pid_sonar_setpoint - (float)sonar_2_raw;
+		pid_error_temp = pid_sonarus_setpoint - (float)sonarus_bottom;
 
-		pid_i_mem_sonar += PID_SONARUS_I * pid_error_temp;
-		if (pid_i_mem_sonar > PID_SONARUS_MAX)pid_i_mem_sonar = PID_SONARUS_MAX;
-		else if (pid_i_mem_sonar < PID_SONARUS_MAX * -1)pid_i_mem_sonar = PID_SONARUS_MAX * -1;
+		pid_i_mem_sonarus += PID_SONARUS_I * pid_error_temp;
+		if (pid_i_mem_sonarus > PID_SONARUS_MAX)pid_i_mem_sonarus = PID_SONARUS_MAX;
+		else if (pid_i_mem_sonarus < PID_SONARUS_MAX * -1)pid_i_mem_sonarus = PID_SONARUS_MAX * -1;
 
-		pid_output_sonar = PID_SONARUS_P * pid_error_temp + pid_i_mem_sonar + PID_SONARUS_D * (pid_error_temp - pid_last_sonar_d_error);
-		if (pid_output_sonar > PID_SONARUS_MAX)pid_output_sonar = PID_SONARUS_MAX;
-		else if (pid_output_sonar < PID_SONARUS_MAX * -1)pid_output_sonar = PID_SONARUS_MAX * -1;
+		pid_output_sonarus = PID_SONARUS_P * pid_error_temp + pid_i_mem_sonarus + PID_SONARUS_D * (pid_error_temp - pid_last_sonarus_d_error);
+		if (pid_output_sonarus > PID_SONARUS_MAX)pid_output_sonarus = PID_SONARUS_MAX;
+		else if (pid_output_sonarus < PID_SONARUS_MAX * -1)pid_output_sonarus = PID_SONARUS_MAX * -1;
 
-		pid_last_sonar_d_error = pid_error_temp;
+		pid_last_sonarus_d_error = pid_error_temp;
 	}
+	
+	// Reset sonarus PID controller in case of sonarus lost
+	else
+		sonarus_pid_reset();
+}
+
+
+/// <summary>
+/// Resets bottom sonarus PID controller
+/// </summary>
+/// <param name=""></param>
+void sonarus_pid_reset(void) {
+	pid_output_sonarus = 0;
+	pid_i_mem_sonarus = 0;
+	pid_last_sonarus_d_error = 0;
 }
 #endif

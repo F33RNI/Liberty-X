@@ -193,7 +193,7 @@ void telemetry(void) {
 #ifdef SONARUS
 	// Send sonarus distance
 	else if (telemetry_loop_counter == 30)
-		telemetry_send_byte = sonar_2_compressed;
+		telemetry_send_byte = sonarus_bottom_compressed;
 #else
 	// Send nothing if Sonarus is disabled
 	else if (telemetry_loop_counter == 30)
