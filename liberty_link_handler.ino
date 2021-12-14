@@ -246,7 +246,7 @@ void liberty_link_handler(void) {
 
             // Set sonarus setpoint to SONARUS_DESCENT_MM if waypoint command is descending
             else if (waypoint_command == WAYP_CMD_BITS_DDC) {
-                //link_waypoint_step = LINK_STEP_DESCENT;
+                link_waypoint_step = LINK_STEP_DESCENT;
             }
         }
 
@@ -254,8 +254,8 @@ void liberty_link_handler(void) {
         // Step DESCENT. Decrease the altitude
         // ---------------------------------------------
         else if (link_waypoint_step == LINK_STEP_DESCENT) {
-            // Switch to sonarus stabilization if the required height is reached
-            if (sonarus_bottom > 0 && sonarus_bottom < SONARUS_DESCENT_MM) {
+            // Switch to sonarus stabilization if the required height is reached or no pressure change
+            if ((sonarus_bottom > 0 && sonarus_bottom < SONARUS_DESCENT_MM) || pid_alt_setpoint > actual_pressure + 50) {
                 link_waypoint_step = LINK_STEP_SONARUS;
                 link_waypoint_loop_counter = 0;
             }
@@ -285,7 +285,10 @@ void liberty_link_handler(void) {
             }
 
             // Execute 2nd sonar PID controller
-            pid_sonarus_setpoint = SONARUS_DESCENT_MM;
+            if (waypoint_command < WAYP_CMD_BITS_FLY)
+                pid_sonarus_setpoint = SONARUS_DDC_MM;
+            else
+                pid_sonarus_setpoint = SONARUS_DESCENT_MM;
             sonarus_pid();
         }
 
@@ -314,7 +317,10 @@ void liberty_link_handler(void) {
             }
 
             // Execute 2nd sonar PID controller
-            pid_sonarus_setpoint = SONARUS_DESCENT_MM;
+            if (waypoint_command < WAYP_CMD_BITS_FLY)
+                pid_sonarus_setpoint = SONARUS_DDC_MM;
+            else
+                pid_sonarus_setpoint = SONARUS_DESCENT_MM;
             sonarus_pid();
         }
     }

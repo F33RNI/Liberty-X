@@ -209,8 +209,11 @@ const float ABORT_PRESSURE_ASCEND PROGMEM = 5;
 // ----- Sonarus section -----
 #ifdef SONARUS
 
-// To what height need to descend in the mode of delivery of a parcel or optical stabilization
+// To what height need to descend in the mode of delivery of a parcel or descending mode
 const uint16_t SONARUS_DESCENT_MM PROGMEM = 700;
+
+// To what height need to descend in the optical stabilization
+const uint16_t SONARUS_DDC_MM PROGMEM = 1000;
 
 // Allow motor shutdown only when sonar_2_raw value is greater than 0 and lower than SONARUS_LINK_MTOF
 // Comment to allow motor shutdown (with Liberty-Link command) at any height
