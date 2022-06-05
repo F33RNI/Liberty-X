@@ -120,7 +120,7 @@ void receiver_start_stop(void) {
 #ifdef SONARUS
 			if (sonarus_bottom == 0 || sonarus_bottom > SONARUS_DESCENT_MM) {
 				start = 0;
-				error = 9;
+				error = ERROR_SONARUS_TAKEOFF;
 			}
 #endif
 			// Execute FTS if error occurs
@@ -187,7 +187,7 @@ void receiver_start_stop(void) {
 		}
 		else if (MANUAL_TAKEOFF_THROTTLE) {
 			// If the manual hover throttle is not valid
-			error = 5;
+			error = ERROR_MANUAL_TAKEOFF;
 			takeoff_throttle = 0;
 			start = 0;
 
@@ -214,8 +214,8 @@ void receiver_start_stop(void) {
 			throttle++;
 		}
 		if (throttle == 1750) {
-			// If take-off is not detected when the throttle has reached 1700: error = 6 and lower the throttle
-			error = 6;
+			// If take-off is not detected when the throttle has reached 1750: lower the throttle
+			error = ERROR_TAKEOFF_NOT_DETECTED;
 			//throttle = MOTOR_IDLE_SPEED;
 		}
 		if (channel_3 <= 1480) {
@@ -253,12 +253,12 @@ void receiver_start_stop(void) {
 			else {
 				// No take-off throttle is calculated if the automated throttle is not between 1400 and 1700 during take-off
 				takeoff_throttle = 0;
-				error = 7;
+				error = ERROR_TAKEOFF_NOT_CALCULATED;
 			}
 		}
 
 		// Reduce throttle to a full stop if an error occurs during takeoff
-		// For only takeoff errors: if (error == 6 || error == 7)
+		// For only takeoff errors: if (error == ERROR_TAKEOFF_NOT_DETECTED || error == ERROR_TAKEOFF_NOT_CALCULATED)
 		if (error) {
 			takeoff_throttle = 0;
 			takeoff_detected = 0;

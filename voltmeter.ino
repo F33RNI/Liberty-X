@@ -42,9 +42,9 @@ void voltmeter(void) {
 
 	// Check voltage
 	if (battery_voltage > 6.0 && battery_voltage < BATTERY_WARNING) {
-		// Set error to 1 if currently no error
+		// Set error to ERROR_LOW_BATTERY if currently no error
 		if (!error)
-			error = 1;
+			error = ERROR_LOW_BATTERY;
 
 		// Start auto-landing sequence on low battery
 #ifdef AUTO_LANDING_LOW_VOLTAGE

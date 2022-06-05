@@ -417,9 +417,9 @@ void liberty_x_fts(void) {
     // Enter infinite loop
     while (true)
     {
-        // Set error to 8 (FTS)
+        // Set error to ERROR_FTS
         if (!error)
-            error = 8;
+            error = ERROR_FTS;
 
         // Blink with LEDs
         leds_error_signal();

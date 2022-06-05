@@ -57,13 +57,13 @@ void calculate_angles(void) {
 
 	// Accelerometer angle calculations
 	// Calculate the total accelerometer vector
-	acc_total_vector = sqrt((acc_x * acc_x) + (acc_y * acc_y) + (acc_z * acc_z));
+	acc_total_vector = sqrtf(((float)acc_x * (float)acc_x) + ((float)acc_y * (float)acc_y) + ((float)acc_z * (float)acc_z));
 
 	// Prevent the asin function to produce a NaN
 	if (abs(acc_y) < acc_total_vector)
-		angle_pitch_acc = asin((float)acc_y / acc_total_vector) * 57.296;
+		angle_pitch_acc = asinf((float)acc_y / acc_total_vector) * 57.296;
 	if (abs(acc_x) < acc_total_vector)
-		angle_roll_acc = asin((float)acc_x / acc_total_vector) * 57.296;
+		angle_roll_acc = asinf((float)acc_x / acc_total_vector) * 57.296;
 
 	// Correct the drift of the gyro pitch angle with the accelerometer angles (default = 0.9996, 0.0004)
 	angle_pitch = angle_pitch * 0.9992 + angle_pitch_acc * 0.0008;

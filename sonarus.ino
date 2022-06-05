@@ -35,9 +35,9 @@ void sonarus_setup(void) {
 	// Check if the sonar system is responding
 	HWire.beginTransmission(SONARUS_ADDRESS);
 	error = HWire.endTransmission();
-	while (error != 0) {
+	while (error) {
 		// Stay in the loop because the sonarus did not responde
-		error = 5;
+		error = ERROR_BOOT_SONARUS;
 		// Show curent error
 		leds_error_signal();
 		// Simulate main loop
@@ -218,7 +218,7 @@ void sonarus_pid_reset(void) {
 /// <param name=""></param>
 void sonarus_start_collision_protection(void) {
 	// Show error
-	error = 10;
+	error = ERROR_SONARUS_COLLISION;
 
 	// Start auto-landing
 	auto_landing_step = 1;

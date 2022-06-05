@@ -38,9 +38,9 @@ void lux_meter_setup(void) {
 	HWire.write(0x01);
 
 	error = HWire.endTransmission();
-	while (error != 0) {
+	while (error) {
 		// Stay in the loop because the lux meter did not responde
-		error = 4;
+		error = ERROR_BOOT_LUX_METER;
 		// Show curent error
 		leds_error_signal();
 		// Simulate main loop

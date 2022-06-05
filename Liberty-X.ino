@@ -82,7 +82,7 @@ void setup()
     // Wait for the reciever
     while (channel_1 < 990 || channel_2 < 990 || channel_3 < 990 || channel_4 < 990) {
         // Stay in the loop because there is no valid signal from the receiver
-        error = 6;
+        error = ERROR_BOOT_RC;
         // Show cuurent error
         leds_error_signal();
         // Simulate main loop
@@ -222,7 +222,7 @@ void loop()
     // Check loop time
     if (micros() - loop_timer > MAX_ALLOWED_LOOP_PERIOD) {
         // Set error status
-        error = 2;
+        error = ERROR_LOOP_TIME;
     }
     while (micros() - loop_timer < LOOP_PERIOD);
     loop_timer = micros();

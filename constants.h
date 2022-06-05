@@ -44,6 +44,26 @@ const uint8_t SONARUS_ADDRESS PROGMEM = 0xEE;
 #endif
 const uint8_t VOLTMETER_PIN PROGMEM = 4;
 
+// Startup error codes
+#define ERROR_BOOT_IMU					1
+#define ERROR_BOOT_COMPASS				2
+#define ERROR_BOOT_BAROMETER			3
+#define ERROR_BOOT_LUX_METER			4
+#define ERROR_BOOT_SONARUS				5
+#define ERROR_BOOT_RC					6
+
+// Error codes
+#define ERROR_LOW_BATTERY				1
+#define ERROR_LOOP_TIME					2
+#define ERROR_GPS_LOST					3
+#define ERROR_MANUAL_TAKEOFF			4
+#define ERROR_TAKEOFF_NOT_DETECTED		5
+#define ERROR_TAKEOFF_NOT_CALCULATED	6
+#define ERROR_FTS						7
+#define ERROR_SONARUS_TAKEOFF			8
+#define ERROR_SONARUS_COLLISION			9
+
+
 // Liberty-Way steps
 #ifdef LIBERTY_LINK
 #define LINK_STEP_IDLE			0

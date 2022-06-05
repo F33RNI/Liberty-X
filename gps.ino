@@ -245,7 +245,7 @@ void gps_handler(void) {
 			// Set the flight mode to 2 (Altitude hold) if flight mode is set to 3 (GPS hold)
 			flight_mode = 2;
 			// Output an error
-			error = 4;
+			error = ERROR_GPS_LOST;
 		}
 	}
 

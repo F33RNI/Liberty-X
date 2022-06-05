@@ -32,9 +32,9 @@ void imu_setup(void) {
 	// Check if the IMU is responding
 	HWire.beginTransmission(IMU_ADDRESS);
 	error = HWire.endTransmission();
-	while (error != 0) {
+	while (error) {
 		// Stay in the loop because the IMU did not responde
-		error = 1;
+		error = ERROR_BOOT_IMU;
 		// Show cuurent error
 		leds_error_signal();
 		// Simulate main loop

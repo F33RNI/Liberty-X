@@ -32,9 +32,9 @@ void barometer_setup(void) {
 	// Check if the barometer is responding
 	HWire.beginTransmission(BAROMETER_ADDRESS);
 	error = HWire.endTransmission();
-	while (error != 0) {
+	while (error) {
 		// Stay in the loop because the barometer did not responde
-		error = 3;
+		error = ERROR_BOOT_BAROMETER;
 		// Show cuurent error
 		leds_error_signal();
 		// Simulate main loop

@@ -47,7 +47,7 @@ void leds_setup(void) {
 /// </summary>
 void leds_handler(void) {
 	leds_flight_mode_signal();
-	if (error > 0) {
+	if (error) {
 		// Error exists
 		leds_error_signal();
 	}
@@ -178,9 +178,9 @@ void leds_error_signal(void) {
 		leds_error_loop_counter = 0;
 
 		// Reset leds_error_counter after +3 cycles (for delay)
-		if (error > 0 && leds_error_counter > error + 3) 
+		if (error && leds_error_counter > error + 3) 
 			leds_error_counter = 0;
-		if (leds_error_counter < error && !leds_red_state && error > 0) {
+		if (leds_error_counter < error && !leds_red_state && error) {
 			// Turn LEDs on if the error flash sequence isn't finished and the red LED is off
 			leds_onboard(1, leds_green_state);
 			ws_leds.setPixelColor(1, COLOR_ERROR);

@@ -32,9 +32,9 @@ void compass_setup(void) {
 	// Check if the compass is responding
 	HWire.beginTransmission(COMPASS_ADDRESS);
 	error = HWire.endTransmission();
-	while (error != 0) {
+	while (error) {
 		// Stay in the loop because the compass did not responde
-		error = 2;
+		error = ERROR_BOOT_COMPASS;
 		// Show cuurent error
 		leds_error_signal();
 		// Simulate main loop
