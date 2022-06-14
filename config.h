@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Fern H. (aka Pavel Neshumov), Liberty-X Flight controller
+ * Copyright (C) 2022 Fern Lane, Liberty-X Flight controller
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,6 +11,8 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
+ * The Liberty-X project started as a fork of the YMFC-32 project by Joop Brokking
  *
  * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY CLAIM, DAMAGES OR
  * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
@@ -31,8 +33,8 @@
 /*********************************/
 /*            Compass            */
 /*********************************/
-// Declination between the magnetic and geographic north. (-4.89 in Panama, 11.0 in Moscow)
-const float COMPASS_DECLINATION PROGMEM = -4.89;
+// Declination between the magnetic and geographic north. (-5.04 in Panama, 11.8 in Moscow)
+const float COMPASS_DECLINATION PROGMEM = 11.8;
 
 // Pring compass calibration values to the serial port
 //#define PRINT_COMPASS_CALIBRATION
@@ -159,7 +161,7 @@ const uint8_t SONARUS_COLLISION_PROTECTION_CYCLES PROGMEM = 5;
 /*            Light meter            */
 /*************************************/
 // Used to dynamically change the camera exposure depending on the illumination of the ARUco marker
-//#define LUX_METER
+#define LUX_METER
 
 #ifdef LUX_METER
 // Request LUX value every 25 * 4ms = 100ms
@@ -257,8 +259,8 @@ const uint8_t BURST_BYTES PROGMEM = 4;
 const uint16_t DEBUG_SEND_CYCLES PROGMEM = 25;
 
 // Variables to debug
-#define DEBUG_VAR_1				PID_SONARUS_D
-//#define DEBUG_VAR_2				pid_pitch_setpoint_base
+#define DEBUG_VAR_1				angle_yaw
+#define DEBUG_VAR_2				actual_compass_heading
 //#define DEBUG_VAR_3				gps_roll_adjust
 //#define DEBUG_VAR_4				gps_pitch_adjust
 #endif

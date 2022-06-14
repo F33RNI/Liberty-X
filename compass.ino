@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Fern H. (aka Pavel Neshumov), Liberty-X Flight controller
+ * Copyright (C) 2022 Fern Lane, Liberty-X Flight controller
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,6 +11,8 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
+ * The Liberty-X project started as a fork of the YMFC-32 project by Joop Brokking
  *
  * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY CLAIM, DAMAGES OR
  * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
@@ -102,14 +104,17 @@ void compass_read() {
 	}
 
 	// The compass values change when the roll and pitch angle of the quadcopter changes
-	compass_x_horizontal = (float)compass_x * cos(angle_pitch * -0.0174533) 
-		+ (float)compass_y * sin(angle_roll * 0.0174533) * sin(angle_pitch * -0.0174533) 
-		- (float)compass_z * cos(angle_roll * 0.0174533) * sin(angle_pitch * -0.0174533);
-	compass_y_horizontal = (float)compass_y * cos(angle_roll * 0.0174533) 
-		+ (float)compass_z * sin(angle_roll * 0.0174533);
+	compass_x_horizontal = (float)compass_x * cos(-angle_pitch * DEG_TO_RAD)
+		+ (float)compass_y * sin(angle_roll * DEG_TO_RAD) * sin(-angle_pitch * DEG_TO_RAD)
+		- (float)compass_z * cos(angle_roll * DEG_TO_RAD) * sin(-angle_pitch * DEG_TO_RAD);
+	compass_y_horizontal = (float)compass_y * cos(angle_roll * DEG_TO_RAD)
+		+ (float)compass_z * sin(angle_roll * DEG_TO_RAD);
 
-	if (compass_y_horizontal < 0)actual_compass_heading = 180 + (180 + ((atan2(compass_y_horizontal, compass_x_horizontal)) * (180 / 3.14)));
-	else actual_compass_heading = (atan2(compass_y_horizontal, compass_x_horizontal)) * (180 / 3.14);
+	// Calculate compass heading
+	actual_compass_heading = atan2(compass_y_horizontal, compass_x_horizontal) * RAD_TO_DEG;
+	if (compass_y_horizontal < 0)
+		actual_compass_heading += 360;
+		
 
 	// Add the declination to the magnetic compass heading to get the geographic north
 	actual_compass_heading += COMPASS_DECLINATION;             

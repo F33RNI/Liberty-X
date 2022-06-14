@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Fern H. (aka Pavel Neshumov), Liberty-X Flight controller
+ * Copyright (C) 2022 Fern Lane, Liberty-X Flight controller
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,6 +11,8 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
+ * The Liberty-X project started as a fork of the YMFC-32 project by Joop Brokking
  *
  * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY CLAIM, DAMAGES OR
  * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
@@ -31,9 +33,9 @@
 /// </summary>
 void calculate_angles(void) {
 	// Gyro PID input. 65.5 = 1 deg/sec (check the datasheet of the MPU-6050 for more information)
-	gyro_roll_input = (gyro_roll_input * 0.7) + (((float)gyro_roll / 65.5) * 0.3);
-	gyro_pitch_input = (gyro_pitch_input * 0.7) + (((float)gyro_pitch / 65.5) * 0.3);
-	gyro_yaw_input = (gyro_yaw_input * 0.7) + (((float)gyro_yaw / 65.5) * 0.3);
+	gyro_roll_input = gyro_roll_input * 0.7 + ((float)gyro_roll / 65.5) * 0.3;
+	gyro_pitch_input = gyro_pitch_input * 0.7 + ((float)gyro_pitch / 65.5) * 0.3;
+	gyro_yaw_input = gyro_yaw_input * 0.7 + ((float)gyro_yaw / 65.5) * 0.3;
 
 	// Gyro angle calculations. 0.0000611 = 1 / (250Hz / 65.5)
 	angle_pitch += (float)gyro_pitch * 0.0000611;
@@ -61,9 +63,9 @@ void calculate_angles(void) {
 
 	// Prevent the asin function to produce a NaN
 	if (abs(acc_y) < acc_total_vector)
-		angle_pitch_acc = asinf((float)acc_y / acc_total_vector) * 57.296;
+		angle_pitch_acc = asinf((float)acc_y / acc_total_vector) * RAD_TO_DEG;
 	if (abs(acc_x) < acc_total_vector)
-		angle_roll_acc = asinf((float)acc_x / acc_total_vector) * 57.296;
+		angle_roll_acc = asinf((float)acc_x / acc_total_vector) * RAD_TO_DEG;
 
 	// Correct the drift of the gyro pitch angle with the accelerometer angles (default = 0.9996, 0.0004)
 	angle_pitch = angle_pitch * 0.9992 + angle_pitch_acc * 0.0008;

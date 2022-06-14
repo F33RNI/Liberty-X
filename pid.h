@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Fern H. (aka Pavel Neshumov), Liberty-X Flight controller
+ * Copyright (C) 2022 Fern Lane, Liberty-X Flight controller
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,6 +11,8 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
+ * The Liberty-X project started as a fork of the YMFC-32 project by Joop Brokking
  *
  * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY CLAIM, DAMAGES OR
  * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
@@ -96,10 +98,10 @@ const float PID_ALT_MAX PROGMEM = 200;
 /*            GPS            */
 /*****************************/
 // GPS P-controller (default = 3.4)
-float PID_GPS_P = 3.4;
+const float PID_GPS_P PROGMEM = 3.4f;
 
 // GPS rotating-memory D-controller (default = 7.6)
-float PID_GPS_D = 7.6;
+const float PID_GPS_D PROGMEM = 7.6f;
 
 // Maximum output of the PID - controller (+ / -)
 const float PID_GPS_MAX PROGMEM = 300;
