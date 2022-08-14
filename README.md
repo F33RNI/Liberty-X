@@ -2,7 +2,7 @@
 
 ![Logo](LOGOTYPE.png "Logo")
 
-[![Twitter](https://img.shields.io/twitter/url?style=social&url=https%3A%2F%2Ftwitter.com%2Ffrey_hertz)](https://twitter.com/intent/tweet?text=Wow:&url=https%3A%2F%2Ftwitter.com%2Ffrey_hertz)
+[![Twitter](https://img.shields.io/twitter/url?style=social&url=https%3A%2F%2Ftwitter.com%2Ff33rni)](https://twitter.com/intent/tweet?text=Wow:&url=https%3A%2F%2Ftwitter.com%2Ff33rni)
 ![GitHub All Releases](https://img.shields.io/github/downloads/XxOinvizioNxX/Liberty-X/total "GitHub All Releases")
 [![GitHub license](https://img.shields.io/github/license/XxOinvizioNxX/Liberty-X)](https://github.com/XxOinvizioNxX/Liberty-X/blob/main/LICENSE)
 [![GitHub stars](https://img.shields.io/github/stars/XxOinvizioNxX/Liberty-X)](https://github.com/XxOinvizioNxX/Liberty-X/stargazers)
@@ -36,7 +36,7 @@ The project is under development. Description, PCB files, schematics, OSD, etc. 
 -----------
 
 ## Feedback
-- Developer: Frey Hertz (Pavel Neshumov)
+- Developer: Fern Lane
 - E-Mail: xxoinvizionxx@gmail.com
 - GitHub: https://github.com/XxOinvizioNxX
 - Twitter: https://twitter.com/frey_hertz
@@ -50,7 +50,7 @@ The project is under development. Description, PCB files, schematics, OSD, etc. 
 -----------
 
 ## Logotype
-Liberty-X logo was designed by Frey Hertz (Pavel Neshumov)
+Liberty-X logo was designed by Fern Lane
 
 -----------
 
